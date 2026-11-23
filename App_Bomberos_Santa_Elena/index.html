@@ -275,4 +275,3199 @@ EN TURNO
 <button onclick="switchTab('TAB_TURNO')" id="tabBtnTurno" class="py-2 px-1.5 rounded-xl text-[11px] font-bold bg-red-900/50 text-red-100 text-center truncate">
 <i class="fa-solid fa-power-off mr-1"></i>Turno
 </button>
-<button onclick="switchTab('TAB_MIS_HORAS')" id="tabBtnMisHoras" class="py-2 px-1.5 rounded-xl text-[11px] font-bold bg-red-900/50 text-red-100
+<button onclick="switchTab('TAB_MIS_HORAS')" id="tabBtnMisHoras" class="py-2 px-1.5 rounded-xl text-[11px] font-bold bg-red-900/50 text-red-100 text-center truncate">
+<i class="fa-solid fa-list-check mr-1"></i>Mis Horas
+</button>
+<button onclick="switchTab('TAB_CONSOLIDADO')" id="tabBtnConsolidado" class="py-2 px-1.5 rounded-xl text-[11px] font-bold bg-red-900/50 text-red-100 text-center truncate">
+<i class="fa-solid fa-clock-rotate-left mr-1"></i>Consolidado
+</button>
+<button onclick="switchTab('TAB_PERSONAL')" id="tabBtnPersonal" class="py-2 px-1.5 rounded-xl text-[11px] font-extrabold bg-white text-bomberos-red shadow-xs text-center truncate">
+<i class="fa-solid fa-users-gear mr-1"></i>Personal
+</button>
+</nav>
+</header>
+
+<div id="persistentEmergencyBanner" class="hidden bg-red-700 text-white px-4 py-2.5 border-b-2 border-amber-400 items-center justify-between gap-2">
+<div class="min-w-0">
+<div class="text-[11px] font-black uppercase flex items-center gap-1.5">
+<i class="fa-solid fa-triangle-exclamation text-amber-300 animate-pulse"></i>
+<span id="bannerEmergencyTitle">EMERGENCIA ACTIVA</span>
+</div>
+<div id="bannerEmergencyDetail" class="text-[11px] text-red-100 truncate"></div>
+</div>
+<button id="btnAdminStopFromBanner" onclick="deactivateEmergencyAlert()" class="hidden shrink-0 bg-white text-red-800 font-black px-2.5 py-1.5 rounded-lg text-[10px] uppercase">
+Finalizar
+</button>
+</div>
+
+<div class="p-4 space-y-4 flex-1">
+
+<div id="viewTabTurno" class="space-y-4 hidden">
+
+<section class="bg-white rounded-2xl p-4 shadow-xs border-2 border-gray-200 space-y-3">
+<div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+<h3 class="font-heading text-xs font-black uppercase text-bomberos-red flex items-center gap-1.5">
+<i class="fa-solid fa-power-off"></i> Interruptor de Turno y Guardia
+</h3>
+<span id="shiftStatePill" class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600">Inactivo / Fuera de Turno</span>
+</div>
+
+<div id="geofenceActiveInfoBox" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-2.5 text-[11px] text-blue-900 flex items-start gap-2">
+<i class="fa-solid fa-location-crosshairs text-blue-600 mt-0.5"></i>
+<div>
+<strong>Geocerca GPS Activa:</strong> Debes encontrarte dentro de un radio de <strong id="geoInfoRadiusTxt">80</strong> m de la Estación (con precisión GPS ≤ 60 m) para iniciar, cambiar de condición o finalizar tu turno.
+</div>
+</div>
+
+<div id="panelStartShift" class="space-y-3">
+<div>
+<label class="block text-[11px] font-extrabold uppercase text-gray-700 mb-1.5">
+1. Selecciona tu condición al entrar de servicio:
+</label>
+<div class="grid grid-cols-2 gap-2">
+<button type="button" onclick="selectStartCondition('DISPONIBLE')" id="btnCondDisp" class="border-2 border-emerald-600 bg-emerald-50 rounded-xl p-3 text-center transition">
+<div class="text-xs font-black text-emerald-950">🚒 Disponible</div>
+<div class="text-[10px] text-emerald-700 font-bold mt-0.5">En Estación</div>
+</button>
+<button type="button" onclick="selectStartCondition('COMANDANTE_GUARDIA')" id="btnCondCmd" class="border-2 border-gray-200 bg-white rounded-xl p-3 text-center transition">
+<div class="text-xs font-black text-gray-900">⭐ Comandante</div>
+<div class="text-[10px] text-gray-500 font-bold mt-0.5">De Guardia</div>
+</button>
+</div>
+</div>
+
+<div>
+<label class="block text-[11px] font-extrabold uppercase text-gray-700 mb-1">
+2. Actividad del Servicio:
+</label>
+<select id="startActividadSelect" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-900">
+<option value="Guardia Preventiva en Estación">🚒 Guardia Preventiva en Estación</option>
+<option value="Atención de Emergencia">🚨 Atención de Emergencia</option>
+<option value="Capacitación / Academia">📚 Capacitación / Academia</option>
+<option value="Mantenimiento de Máquina / Equipos">🔧 Mantenimiento de Máquina / Equipos</option>
+<option value="Apoyo Administrativo / Comandancia">📋 Apoyo Administrativo / Comandancia</option>
+</select>
+</div>
+
+<button type="button" data-shift-action onclick="startAutomaticShift()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-60 text-white font-black py-4 rounded-xl shadow-md transition text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+<i class="fa-solid fa-toggle-on text-base"></i> Activar Turno (Entrar en Servicio)
+</button>
+</div>
+
+<div id="panelActiveShift" class="hidden space-y-3">
+<div class="bg-emerald-950 text-white rounded-2xl p-4 text-center border-2 border-emerald-500 shadow-inner">
+<div id="activeShiftCondBadge" class="inline-block bg-bomberos-gold text-gray-950 text-[10px] font-black px-3 py-0.5 rounded-full uppercase mb-1.5">
+🚒 DISPONIBLE EN ESTACIÓN
+</div>
+<div class="text-xs text-emerald-200 font-bold">
+EN TURNO ACTIVO DESDE LAS <span id="activeShiftStartTimeText" class="text-white underline">--:--:--</span>
+</div>
+<div id="activeShiftTimerDisplay" class="font-heading text-3xl font-black tracking-wider text-emerald-400 my-1.5">
+00-00-00
+</div>
+<div id="activeShiftActivityText" class="text-[11px] text-emerald-100 font-medium">
+Guardia Preventiva en Estación
+</div>
+<div class="text-[10px] text-emerald-300/80 mt-1.5">
+<i class="fa-solid fa-circle-info mr-1"></i>Al presionar "Salir", se aplicará la misma validación que al finalizar el turno.
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+<button type="button" data-shift-action onclick="switchActiveShiftCondition('DISPONIBLE')" class="py-2 px-2 rounded-xl border border-gray-300 bg-gray-50 disabled:opacity-60 text-[11px] font-bold text-gray-800">
+Pasar a 🚒 Disponible
+</button>
+<button type="button" data-shift-action onclick="switchActiveShiftCondition('COMANDANTE_GUARDIA')" class="py-2 px-2 rounded-xl border border-amber-300 bg-amber-50 disabled:opacity-60 text-[11px] font-bold text-amber-950">
+Pasar a ⭐ Cmdte. Guardia
+</button>
+</div>
+
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">
+Novedades al finalizar (Opcional)
+</label>
+<input type="text" id="endShiftNotesInput" placeholder="Ej: Sin novedad durante el servicio" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-medium">
+</div>
+
+<button type="button" data-shift-action onclick="finishAutomaticShift()" class="w-full bg-bomberos-red hover:bg-bomberos-darkred active:scale-[0.99] disabled:opacity-60 text-white font-black py-4 rounded-xl shadow-lg transition text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+<i class="fa-solid fa-toggle-off text-base"></i> Desactivar Turno (Finalizar Servicio)
+</button>
+</div>
+<p id="shiftGeofenceStatus" role="status" class="hidden text-xs font-bold text-blue-900">Verificando señal satélite GPS para registrar el turno…</p>
+</section>
+
+<section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-200 space-y-3">
+<div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<h3 class="font-heading text-xs font-black uppercase text-gray-900">
+Personal Disponible en la Estación
+</h3>
+</div>
+<span id="boardTotalActiveBadge" class="bg-emerald-100 text-emerald-800 text-[11px] font-black px-2.5 py-0.5 rounded-full">0 Activos</span>
+</div>
+
+<div class="bg-amber-50 border border-amber-300 rounded-xl p-3">
+<div class="text-[10px] font-black uppercase text-amber-900 flex items-center gap-1 mb-0.5">
+<i class="fa-solid fa-star text-amber-500"></i> Comandante de Guardia en Turno
+</div>
+<div id="boardCommanderText" class="text-xs font-bold text-gray-900">Sin Comandante de Guardia activo en este momento</div>
+</div>
+
+<div>
+<div class="flex items-center justify-between text-[10px] font-extrabold uppercase text-gray-500 mb-2">
+<span>Unidades con Turno Activo (<span id="boardAvailableCount">0</span>)</span>
+<span id="liveClockDisplay" class="font-mono text-gray-500">00:00:00</span>
+</div>
+<div id="boardAvailableList" class="space-y-2"></div>
+</div>
+</section>
+</div>
+
+
+<div id="viewTabMisHoras" class="hidden space-y-4">
+<section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-200">
+<div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+<h3 class="font-heading text-xs font-black uppercase text-gray-900">
+Mis Horas Registradas
+</h3>
+<span id="myTotalHoursBadge" class="bg-emerald-100 text-emerald-800 text-xs font-black font-mono px-2.5 py-0.5 rounded-full">00-00-00</span>
+</div>
+<div id="myHoursCardsList" class="space-y-2.5"></div>
+</section>
+</div>
+
+
+<div id="viewTabConsolidado" class="hidden space-y-4">
+<section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-200 space-y-3">
+<div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+<div>
+<h3 class="font-heading text-xs font-black uppercase text-gray-900">
+Consolidado General de Horas
+</h3>
+<p class="text-[10px] text-gray-500 font-semibold">Formato oficial HH-MM-SS</p>
+</div>
+<span id="adminTotalGlobalBadge" class="bg-red-100 text-bomberos-red text-xs font-black font-mono px-2.5 py-1 rounded-full">00-00-00</span>
+</div>
+
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Bombero</label>
+<select id="adminFilterUnit" onchange="renderAdminHoursList()" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-xs font-bold"><option value="ALL">Ver Todas las Unidades</option></select>
+</div>
+
+<button onclick="exportHoursToExcel()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs">
+<i class="fa-solid fa-file-excel"></i> Exportar Consolidado a Excel (.xlsx)
+</button>
+
+<div id="adminAllHoursCardsList" class="space-y-2.5 pt-1"></div>
+</section>
+</div>
+
+
+<div id="viewTabPersonal" class="space-y-4">
+
+<section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-md border-2 border-blue-500 space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="font-heading text-xs font-black uppercase text-blue-300 flex items-center gap-1.5">
+<i class="fa-solid fa-location-crosshairs text-base"></i> Geocerca de Estación (GPS)
+</h3>
+<span id="geoAdminStatusBadge" class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-gray-700 text-gray-300 uppercase">Desactivada</span>
+</div>
+
+<p class="text-[11px] text-slate-300 leading-relaxed">
+Coordenadas fijas de la Estación CBV Santa Elena (Calle 4 6A-4). Ajusta únicamente el <strong>radio permitido en metros</strong>; el personal <strong>solo podrá iniciar, cambiar de condición o finalizar un turno</strong> dentro de ese perímetro con señal GPS real (precisión ≤ 60 m).
+</p>
+
+<form onsubmit="saveGeofenceConfig(event)" class="space-y-2.5">
+<label class="flex items-center justify-between bg-white/10 border border-white/15 rounded-xl px-3 py-2.5 cursor-pointer">
+<span class="text-xs font-extrabold text-white">Exigir Geocerca GPS para Activar Turno</span>
+<input type="checkbox" id="geoEnabledCheck" class="w-5 h-5 accent-blue-500 rounded">
+</label>
+
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Latitud Fija Estación</label>
+<input type="number" step="any" id="geoLatInput" readonly value="3.65855" class="w-full bg-slate-950/70 border border-slate-700 text-emerald-300 rounded-xl px-3 py-2 text-xs font-mono font-bold cursor-not-allowed">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Longitud Fija Estación</label>
+<input type="number" step="any" id="geoLngInput" readonly value="-76.24802" class="w-full bg-slate-950/70 border border-slate-700 text-emerald-300 rounded-xl px-3 py-2 text-xs font-mono font-bold cursor-not-allowed">
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-2 items-center">
+<div>
+<label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Radio permitido (Metros)</label>
+<input type="number" min="15" max="5000" id="geoRadiusInput" required="" value="80" class="w-full bg-slate-950 border border-blue-400 text-white rounded-xl px-3 py-2 text-xs font-mono font-bold">
+</div>
+<label class="flex items-center gap-2 pt-4 cursor-pointer">
+<input type="checkbox" id="geoApplyAdminsCheck" class="w-4 h-4 accent-blue-500 rounded">
+<span class="text-[10px] font-bold text-slate-200 leading-tight">Aplicar también a Admins</span>
+</label>
+</div>
+
+<button type="submit" class="w-full bg-white text-slate-950 hover:bg-slate-100 font-black py-2.5 rounded-xl text-xs uppercase shadow-sm">
+<i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Configuración de Geocerca
+</button>
+</form>
+
+<div class="border-t border-slate-700 pt-3 space-y-2">
+<button type="button" id="btnTestGeofence" onclick="testCurrentGeofenceDistance()" class="w-full bg-slate-950 hover:bg-slate-800 border border-blue-400/60 text-blue-200 font-extrabold py-2.5 rounded-xl text-xs disabled:opacity-60">
+<i class="fa-solid fa-location-dot mr-1" aria-hidden="true"></i> Probar mi distancia actual
+</button>
+<p class="text-[11px] text-slate-300">Usa la configuración guardada de la estación (exige precisión GPS ≤ 60 m).</p>
+<p id="geoTestResult" role="status" class="whitespace-pre-line break-words text-xs leading-relaxed"></p>
+</div>
+</section>
+
+<section class="bg-gradient-to-br from-emerald-900 to-emerald-950 text-white rounded-2xl p-4 shadow-md border-2 border-emerald-500 space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="font-heading text-xs font-black uppercase text-emerald-300 flex items-center gap-1.5">
+<i class="fa-solid fa-file-excel text-base"></i> Carga Masiva de Personal (Excel)
+</h3>
+<span class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+.XLSX / .CSV
+</span>
+</div>
+
+<p class="text-[11px] text-emerald-100 leading-relaxed">
+Columnas: <strong>CEDULA, PIN, NOMBRE, RANGO, CARGO, ROL</strong> (<strong>ADMINISTRADOR</strong>, <strong>DIGITADOR</strong> o <strong>CENTRAL_EMERGENCIA</strong>).
+</p>
+
+<div class="grid grid-cols-1 gap-2">
+<button type="button" onclick="downloadPersonnelExcelTemplate()" class="w-full bg-white/10 hover:bg-white/20 text-white border border-white/25 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+<i class="fa-solid fa-download text-amber-300"></i>
+<span>1. Descargar Plantilla Excel (.xlsx)</span>
+</button>
+
+<label class="cursor-pointer w-full bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black py-3 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition">
+<i class="fa-solid fa-upload"></i>
+<span>2. Subir Archivo Excel (.xlsx / .csv) con Personal</span>
+<input type="file" id="excelBulkInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleBulkExcelUpload(event)">
+</label>
+</div>
+
+<div id="bulkUploadResultBanner" class="hidden bg-black/35 border border-emerald-400/40 rounded-xl p-2.5 text-[11px] text-emerald-100 font-semibold"></div>
+</section>
+
+<section id="userFormSection" class="bg-white rounded-2xl p-4 shadow-xs border-2 border-gray-200">
+<div class="flex items-center justify-between mb-2">
+<h3 id="userFormTitle" class="font-heading text-xs font-black uppercase text-bomberos-red">
+<i class="fa-solid fa-user-plus mr-1"></i> Crear o Editar Unidad Individual
+</h3>
+<button type="button" id="btnCancelEditUser" onclick="resetUserForm()" class="hidden text-xs font-bold text-gray-500 underline">
+Cancelar
+</button>
+</div>
+
+<div id="editingAlertBanner" class="hidden mb-3 bg-amber-50 border border-amber-300 text-amber-900 rounded-xl p-2.5 text-xs font-bold">
+✏️ Editando datos de la unidad. Modifica los campos y pulsa "Guardar Cambios".
+</div>
+
+<form onsubmit="saveUserFromAdmin(event)" class="space-y-2.5">
+<input type="hidden" id="editOriginalId" value="">
+
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Cédula (Usuario)</label>
+<input type="text" id="usrCedula" required="" placeholder="Ej: 1113000111" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">PIN Inicial (1er Ingreso)</label>
+<input type="text" id="usrPin" required="" placeholder="Ej: 1234" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold">
+</div>
+</div>
+
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Nombre Completo</label>
+<input type="text" id="usrNombre" required="" placeholder="Nombre y Apellidos" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold">
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Rango / Grado</label>
+<input type="text" id="usrRango" required="" value="Bombero Voluntario" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Cargo</label>
+<input type="text" id="usrCargo" required="" value="Operativo" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold">
+</div>
+</div>
+
+<div>
+<label class="block text-[10px] font-bold uppercase text-bomberos-red mb-1">Rol en el Sistema</label>
+<select id="usrRol" class="w-full bg-red-50 border border-red-300 rounded-xl px-3 py-2.5 text-xs font-extrabold text-gray-900">
+<option value="DIGITADOR">✍️ DIGITADOR (Registra turno con geocerca y recibe alertas)</option>
+<option value="ADMINISTRADOR">👑 ADMINISTRADOR (Control total de personal, geocerca y horas)</option>
+<option value="CENTRAL_EMERGENCIA">🚨 CENTRAL DE EMERGENCIA (Solo botón activador de sirena)</option>
+</select>
+</div>
+
+<label class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 cursor-pointer">
+<input type="checkbox" id="usrMustChangePinCheck" checked="" class="w-4 h-4 accent-bomberos-red rounded">
+<span class="text-[11px] font-bold text-amber-950">Exigir cambio de PIN en su próximo ingreso</span>
+</label>
+
+<button type="submit" id="btnSubmitUserForm" class="w-full bg-bomberos-red hover:bg-bomberos-darkred text-white font-extrabold py-3 rounded-xl shadow-md transition text-xs uppercase">
+<i class="fa-solid fa-check mr-1"></i> Guardar Unidad
+</button>
+</form>
+</section>
+
+<section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-200 space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="font-heading text-xs font-black uppercase text-gray-900">
+Personal Registrado (<span id="totalUsersBadge">1</span>)
+</h3>
+<div class="flex items-center gap-2">
+<button onclick="testSirenShort()" class="text-[11px] font-extrabold text-bomberos-red hover:underline flex items-center gap-1">
+<i class="fa-solid fa-volume-high"></i> Probar Sirena
+</button>
+<button onclick="exportUsersToExcel()" class="text-[11px] font-extrabold text-emerald-700 hover:underline flex items-center gap-1">
+<i class="fa-solid fa-file-arrow-down"></i> Excel
+</button>
+</div>
+</div>
+
+<div id="personnelCardsList" class="space-y-2.5"></div>
+</section>
+
+</div>
+
+</div>
+</div>
+
+</div>
+
+
+<div id="emergencyAlertOverlay" class="fixed inset-0 siren-overlay-bg z-50 hidden flex-col items-center justify-center p-5 text-white text-center">
+<div class="w-full max-w-sm bg-black/55 backdrop-blur-xs border-4 border-bomberos-gold rounded-3xl p-6 shadow-2xl space-y-4">
+<div class="w-20 h-20 mx-auto rounded-full bg-bomberos-gold text-red-900 flex items-center justify-center text-4xl shadow-xl animate-bounce">
+<i class="fa-solid fa-bell"></i>
+</div>
+<div>
+<span class="bg-bomberos-gold text-gray-950 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+🚨 ALERTA DE EMERGENCIA 🚨
+</span>
+<h2 id="overlayEmergencyType" class="font-heading text-xl font-black uppercase mt-3 text-white leading-tight">
+EMERGENCIA ACTIVA
+</h2>
+<p id="overlayEmergencyMsg" class="text-sm font-bold text-amber-200 mt-1.5"></p>
+<p id="overlayEmergencyMeta" class="text-[11px] text-red-100 mt-2"></p>
+</div>
+
+<div class="space-y-2.5 pt-2">
+<button type="button" onclick="acknowledgeAndSilenceEmergency()" class="w-full bg-bomberos-gold hover:bg-yellow-300 text-gray-950 font-black py-4 rounded-2xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
+<i class="fa-solid fa-volume-xmark text-base"></i> Entendido / Silenciar Sirena
+</button>
+<button type="button" id="btnOverlayAdminDeactivate" onclick="deactivateEmergencyAlert()" class="hidden w-full bg-white/15 hover:bg-white/25 border border-white/30 text-white font-extrabold py-3 rounded-2xl text-xs uppercase">
+<i class="fa-solid fa-circle-stop mr-1"></i> Finalizar Emergencia para Todos
+</button>
+</div>
+</div>
+</div>
+
+
+<div id="firstLoginPinModal" class="fixed inset-0 bg-black/75 z-50 hidden items-center justify-center p-4">
+<div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl border-2 border-bomberos-gold space-y-3.5">
+<div class="text-center">
+<div class="w-12 h-12 mx-auto rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xl mb-2">
+<i class="fa-solid fa-key"></i>
+</div>
+<span class="bg-amber-100 text-amber-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+Seguridad de Primer Ingreso
+</span>
+<h3 class="font-heading text-sm font-black uppercase text-gray-900 mt-1.5">
+Actualiza tu PIN Personal
+</h3>
+<p id="firstLoginUnitName" class="text-xs font-bold text-bomberos-red mt-0.5"></p>
+<p class="text-[11px] text-gray-600 mt-1">
+Ingresaste con un <strong>PIN Temporal</strong>. Por seguridad, crea un PIN personal nuevo para continuar.
+</p>
+</div>
+
+<form onsubmit="submitFirstLoginPinChange(event)" class="space-y-3">
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Nuevo PIN Personal (Mínimo 4 dígitos)</label>
+<input type="password" id="firstNewPin1" required="" minlength="4" placeholder="Escribe tu nuevo PIN" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold tracking-widest text-gray-900 focus:ring-2 focus:ring-bomberos-red outline-none">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Confirmar Nuevo PIN</label>
+<input type="password" id="firstNewPin2" required="" minlength="4" placeholder="Repite tu nuevo PIN" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold tracking-widest text-gray-900 focus:ring-2 focus:ring-bomberos-red outline-none">
+</div>
+
+<button type="submit" class="w-full bg-bomberos-red hover:bg-bomberos-darkred text-white font-extrabold py-3 rounded-xl shadow-md text-xs uppercase tracking-wide">
+<i class="fa-solid fa-lock mr-1"></i> Guardar Mi Nuevo PIN y Entrar
+</button>
+<button type="button" onclick="cancelFirstLoginPinChange()" class="w-full text-center text-xs font-bold text-gray-500 py-1 hover:underline">
+Cancelar y volver al inicio
+</button>
+</form>
+</div>
+</div>
+
+
+<div id="voluntaryPinModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+<div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl border border-gray-200 space-y-3.5">
+<div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+<h3 class="font-heading text-xs font-black uppercase text-gray-900 flex items-center gap-1.5">
+<i class="fa-solid fa-key text-bomberos-red"></i> Cambiar Mi PIN de Acceso
+</h3>
+<button type="button" onclick="closeVoluntaryPinModal()" class="text-gray-400 hover:text-gray-700 text-sm font-bold">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+
+<form onsubmit="submitVoluntaryPinChange(event)" class="space-y-3">
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">PIN Actual</label>
+<input type="password" id="volCurrentPin" required="" placeholder="Ingresa tu PIN actual" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold tracking-widest">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Nuevo PIN (Mínimo 4 caracteres)</label>
+<input type="password" id="volNewPin1" required="" minlength="4" placeholder="Escribe tu nuevo PIN" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold tracking-widest">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Confirmar Nuevo PIN</label>
+<input type="password" id="volNewPin2" required="" minlength="4" placeholder="Repite tu nuevo PIN" class="w-full px-3.5 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold tracking-widest">
+</div>
+
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button type="button" onclick="closeVoluntaryPinModal()" class="py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700">
+Cancelar
+</button>
+<button type="submit" class="py-2.5 rounded-xl bg-bomberos-red text-white text-xs font-extrabold">
+Actualizar PIN
+</button>
+</div>
+</form>
+</div>
+</div>
+
+
+<div id="adminResetPinModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+<div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl border-2 border-amber-400 space-y-3.5">
+<div class="flex items-center justify-between border-b border-gray-100 pb-2">
+<h3 class="font-heading text-xs font-black uppercase text-gray-900 flex items-center gap-1.5">
+<i class="fa-solid fa-rotate-left text-bomberos-red"></i> Restablecer PIN de Unidad
+</h3>
+<button type="button" onclick="closeAdminResetPinModal()" class="text-gray-400 hover:text-gray-700 text-sm font-bold">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs">
+<div class="font-extrabold text-gray-900" id="resetModalUserName">Unidad</div>
+<div class="text-[11px] text-gray-600 mt-0.5">
+El PIN quedará como <strong>PIN Temporal</strong> y el sistema exigirá a la unidad crear uno nuevo al ingresar.
+</div>
+</div>
+
+<form onsubmit="confirmAdminResetPin(event)" class="space-y-3">
+<input type="hidden" id="resetModalUserId" value="">
+<div>
+<label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Asignar PIN Temporal de Ingreso</label>
+<input type="text" id="resetModalNewTempPin" required="" minlength="4" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-extrabold text-gray-900">
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+<button type="button" onclick="closeAdminResetPinModal()" class="py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700">
+Cancelar
+</button>
+<button type="submit" class="py-2.5 rounded-xl bg-bomberos-red text-white text-xs font-extrabold">
+Restablecer PIN
+</button>
+</div>
+</form>
+</div>
+</div>
+
+
+<div id="forgotPinInfoModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+<div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-3 text-center">
+<div class="w-12 h-12 mx-auto rounded-full bg-red-100 text-bomberos-red flex items-center justify-center text-xl">
+<i class="fa-solid fa-unlock-keyhole"></i>
+</div>
+<h3 class="font-heading text-sm font-black uppercase text-gray-900">
+¿Olvidaste tu PIN de Acceso?
+</h3>
+<p class="text-xs text-gray-600 leading-relaxed">
+Solicita el restablecimiento de tu clave al Administrador (<strong>Bombero Voluntario Arley Posso Cobo</strong> o Comandancia).
+</p>
+<p class="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-2.5 font-semibold">
+El Administrador te asignará un PIN temporal para que al ingresar puedas elegir tu nuevo PIN personal.
+</p>
+<button type="button" onclick="closeForgotPinModal()" class="w-full bg-bomberos-red text-white font-extrabold py-2.5 rounded-xl text-xs uppercase">
+Entendido
+</button>
+</div>
+</div>
+
+
+<dialog id="editHoursDialog" class="security-dialog" aria-labelledby="editHoursTitle" onclose="resetHourEdit()">
+<form onsubmit="confirmHourEdit(event)" class="space-y-3">
+<h3 id="editHoursTitle" class="font-heading text-sm font-black uppercase text-blue-800">
+<i class="fa-solid fa-pen-to-square mr-1"></i> Corregir Horario de Turno (Admin)
+</h3>
+<div class="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-1 text-xs">
+<p><strong>Unidad:</strong> <span id="editHoursUnit"></span></p>
+<p><strong>Horario anterior:</strong> <span id="editHoursOldSummary" class="font-mono font-bold"></span></p>
+</div>
+<div>
+<label for="editHoursDate" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Fecha del Servicio</label>
+<input id="editHoursDate" type="date" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-bold">
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label for="editHoursStart" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Hora Entrada</label>
+<input id="editHoursStart" type="time" step="1" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-bold">
+</div>
+<div>
+<label for="editHoursEnd" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Hora Salida</label>
+<input id="editHoursEnd" type="time" step="1" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-bold">
+</div>
+</div>
+<div>
+<label for="editHoursNotes" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Motivo de Corrección / Novedad (Visible para el bombero)</label>
+<input id="editHoursNotes" type="text" required placeholder="Ej: Ajuste de salida por olvido al cerrar turno" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs font-medium">
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1">
+<button type="button" onclick="document.getElementById('editHoursDialog').close()" class="py-2.5 rounded-xl border border-gray-300 text-xs font-bold">Cancelar</button>
+<button type="submit" class="py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-extrabold">Guardar Corrección</button>
+</div>
+</form>
+</dialog>
+
+<dialog id="deleteHoursDialog" class="security-dialog" aria-labelledby="deleteHoursTitle" aria-describedby="deleteHoursHelp" onclose="resetHourDeletion()">
+<form onsubmit="confirmHourDeletion(event)" class="space-y-3">
+<h3 id="deleteHoursTitle" class="font-heading text-sm font-black uppercase text-bomberos-red">Confirmar eliminación de horas</h3>
+<div class="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1 text-xs">
+<p><strong>Unidad:</strong> <span id="deleteHoursUnit"></span></p>
+<p><strong>Fecha:</strong> <span id="deleteHoursDate"></span></p>
+<p><strong>Total de horas (HH-MM-SS):</strong> <span id="deleteHoursTotal" class="font-mono font-black"></span></p>
+</div>
+<p id="deleteHoursHelp" class="text-xs text-gray-600">Esta acción borra el registro de la nube. Escribe exactamente <strong>ELIMINAR</strong> o ingresa un PIN de Administrador para habilitar el borrado definitivo.</p>
+<label for="deleteHoursConfirmation" class="block text-xs font-bold">Confirmación de seguridad</label>
+<input id="deleteHoursConfirmation" type="password" autocomplete="off" required autofocus oninput="updateHourDeletionConfirmation()" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-bomberos-red outline-none">
+<div class="grid grid-cols-2 gap-2">
+<button type="button" onclick="document.getElementById('deleteHoursDialog').close()" class="py-3 rounded-xl border border-gray-300 text-xs font-bold">Cancelar</button>
+<button type="submit" id="btnConfirmHourDeletion" disabled class="security-confirm py-3 rounded-xl bg-bomberos-red text-white text-xs font-extrabold">Eliminar definitivamente</button>
+</div>
+</form>
+</dialog>
+
+<dialog id="centralLogoutDialog" class="security-dialog" aria-labelledby="centralLogoutTitle" aria-describedby="centralLogoutHelp" onclose="resetCentralLogout()">
+<form onsubmit="confirmCentralLogout(event)" class="space-y-3">
+<h3 id="centralLogoutTitle" class="font-heading text-sm font-black uppercase text-bomberos-red">Cerrar sesión de Central</h3>
+<p id="centralLogoutHelp" class="text-xs text-gray-600">La sesión de Central permanece abierta. Para salir es obligatorio ingresar el PIN de un usuario activo con rol Administrador.</p>
+<label for="centralLogoutPin" class="block text-xs font-bold">PIN de Administrador</label>
+<input id="centralLogoutPin" type="password" autocomplete="off" required autofocus oninput="updateCentralLogoutConfirmation()" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-bomberos-red outline-none">
+<div class="grid grid-cols-2 gap-2">
+<button type="button" onclick="document.getElementById('centralLogoutDialog').close()" class="py-3 rounded-xl border border-gray-300 text-xs font-bold">Cancelar</button>
+<button type="submit" id="btnConfirmCentralLogout" disabled class="security-confirm py-3 rounded-xl bg-bomberos-red text-white text-xs font-extrabold">Cerrar sesión</button>
+</div>
+</form>
+</dialog>
+
+<dialog id="geofenceErrorDialog" role="alertdialog" aria-labelledby="geofenceErrorTitle" aria-describedby="geofenceErrorMessage" class="m-auto w-11/12 max-w-sm rounded-2xl border-2 border-red-400 bg-red-50 p-4 text-red-950 shadow-2xl backdrop:bg-gray-950/60">
+<form method="dialog" class="space-y-3">
+<h2 id="geofenceErrorTitle" class="font-heading text-sm font-black uppercase"><i class="fa-solid fa-location-crosshairs mr-1" aria-hidden="true"></i> Turno bloqueado</h2>
+<p id="geofenceErrorMessage" class="text-sm font-bold leading-relaxed"></p>
+<button type="submit" class="w-full rounded-xl bg-red-800 px-3 py-2.5 text-xs font-extrabold text-white hover:bg-red-900">Entendido</button>
+</form>
+</dialog>
+
+<div id="toastBox" class="fixed bottom-4 left-1/2 -translate-x-1/2 max-w-[92vw] bg-gray-950 text-white px-4 py-2.5 rounded-xl shadow-2xl border-l-4 border-bomberos-gold hidden items-center gap-2 z-50 text-xs font-bold">
+<i class="fa-solid fa-circle-check text-emerald-400"></i>
+<span id="toastMessage">Listo</span>
+</div>
+
+<script>
+const STORAGE_KEY_CLEAN = 'cbv_santa_elena_v7_master';
+const SESSION_STORAGE_KEY = 'cbv_santa_elena_session_v2';
+const TAB_STORAGE_KEY = 'cbv_santa_elena_last_tab_v1';
+const GAS_URL_STORAGE_KEY = 'cbv_santa_elena_gas_url_v1';
+const EXTERNAL_GAS_API_URL = "https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec";
+
+// COORDENADAS FIJAS OFICIALES ESTACIÓN CBV SANTA ELENA (CALLE 4 6A-4)
+const FIXED_STATION_LAT = 3.65855;
+const FIXED_STATION_LNG = -76.24802;
+
+// PARÁMETROS ESTRICTOS DE PRECISIÓN SATELITAL GPS
+const MAX_GPS_ACCURACY_METERS = 60;
+const MAX_GPS_AGE_MS = 15000;
+const MIN_GPS_RETRY_COOLDOWN_MS = 4000;
+
+let currentUser = null;
+let pendingHourDeletion = null;
+let pendingHourEditId = null;
+let pendingFirstLoginUser = null;
+let selectedStartCond = 'DISPONIBLE';
+let usersList = [];
+let hoursList = [];
+const state = {
+geofence: {
+enabled: false,
+lat: FIXED_STATION_LAT,
+lng: FIXED_STATION_LNG,
+radiusMeters: 80,
+applyToAdmins: false
+}
+};
+const GPS_REQUIRED_MESSAGE = 'Registro bloqueado: debes activar el GPS satelital y permitir la ubicación de alta precisión para registrar turno.';
+const INVALID_GEOFENCE_MESSAGE = 'La geocerca de la estación no tiene coordenadas o un radio válidos. Contacta a Administración.';
+let shiftGeofencePending = false;
+let lastGpsCheckAtMs = 0;
+let emergencyAlertState = {
+active: false,
+id: '',
+tipo: '',
+mensaje: '',
+activatedBy: '',
+activatedAt: ''
+};
+
+let localUpdatedAt = 0;
+let isSavingRemote = false;
+let serverHydrated = false;
+let lastAcknowledgedAlertId = '';
+
+const LOGO_STORAGE_KEY = 'cbv_santa_elena_logo_cache_v1';
+const LOGO_VERSION_KEY = 'cbv_santa_elena_logo_ver_v1';
+let customLogoDataUrl = '';
+let localLogoVersion = 0;
+let isFetchingLogo = false;
+
+let audioCtx = null;
+let isSirenPlaying = false;
+let sirenOsc1 = null;
+let sirenOsc2 = null;
+let sirenGain = null;
+let sirenSweepInterval = null;
+let bgGuardEnabled = false;
+let wakeLockSentinel = null;
+let wakeLockPending = false;
+let notificationPermissionPending = false;
+let sirenAudioPrimed = false;
+let silentWavUrlCache = '';
+let sirenWavUrlCache = '';
+let pollWorker = null;
+let pollIntervalId = null;
+let swRegistrationRef = null;
+
+function getColombiaDateStr(dateObj = new Date()) {
+return new Intl.DateTimeFormat('en-CA', {
+timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit'
+}).format(dateObj);
+}
+
+function getColombiaTimeStr(dateObj = new Date()) {
+return new Intl.DateTimeFormat('es-CO', {
+timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+}).format(dateObj);
+}
+
+function isGoogleAppsScriptEnv() {
+return Boolean(window.google && google.script && google.script.run && google.script.run.obtenerEstadoServidor);
+}
+
+function getEffectiveGasApiUrl() {
+if (EXTERNAL_GAS_API_URL && EXTERNAL_GAS_API_URL.indexOf('https://script.google.com/') === 0) {
+return EXTERNAL_GAS_API_URL;
+}
+try {
+const saved = localStorage.getItem(GAS_URL_STORAGE_KEY) || '';
+if (saved && saved.indexOf('https://script.google.com/') === 0) return saved;
+} catch (e) {}
+return '';
+}
+
+function isExternalPwaMode() {
+const host = String(window.location.hostname || '');
+return Boolean(
+!isGoogleAppsScriptEnv() &&
+window.location.protocol.indexOf('http') === 0 &&
+host.indexOf('google.com') === -1 &&
+host.indexOf('googleusercontent.com') === -1
+);
+}
+
+function hasRemoteBackend() {
+return isGoogleAppsScriptEnv() || Boolean(getEffectiveGasApiUrl());
+}
+
+function saveActiveSession(userObj) {
+if (!userObj) return;
+try {
+const session = {
+cedula: String(userObj.cedula || '').trim(),
+pin: String(userObj.pin || '').trim()
+};
+if (userObj.rol !== 'CENTRAL_EMERGENCIA') session.savedAt = Date.now();
+localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+} catch (e) {}
+}
+
+function clearSavedSession() {
+try {
+localStorage.removeItem(SESSION_STORAGE_KEY);
+localStorage.removeItem(TAB_STORAGE_KEY);
+} catch (e) {}
+}
+
+function tryRestoreSavedSession() {
+if (currentUser) return true;
+try {
+const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+if (!raw) return false;
+const sess = JSON.parse(raw);
+if (!sess || !sess.cedula || !sess.pin) return false;
+const found = usersList.find(u =>
+String(u.cedula).trim().toLowerCase() === String(sess.cedula).trim().toLowerCase() &&
+String(u.pin).trim() === String(sess.pin).trim() &&
+u.activo !== false
+);
+const maxAgeMs = 30 * 24 * 60 * 60 * 1000;
+if (found && found.rol !== 'CENTRAL_EMERGENCIA' && sess.savedAt && (Date.now() - Number(sess.savedAt)) > maxAgeMs) {
+clearSavedSession();
+return false;
+}
+if (found && !found.mustChangePin) {
+completeLoginSession(found, true);
+return true;
+}
+} catch (e) {}
+return false;
+}
+
+function formatSecondsToHHMMSS(totalSeconds) {
+const secs = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+const s = String(secs % 60).padStart(2, '0');
+return `${h}-${m}-${s}`;
+}
+
+function getRecordDurationSeconds(r) {
+if (typeof r.durationSeconds === 'number' && !isNaN(r.durationSeconds)) {
+return Math.max(0, Math.round(r.durationSeconds));
+}
+return Math.max(0, Math.round(Number(r.total || 0) * 3600));
+}
+
+function getDefaultAdminUser() {
+return {
+id: 'U-ADMIN-16866494',
+cedula: '16866494',
+pin: '2110',
+nombre: 'Arley Posso Cobo',
+rango: 'Bombero Voluntario',
+cargo: 'Administrador General',
+rol: 'ADMINISTRADOR',
+activo: true,
+exentoGeocerca: false,
+mustChangePin: false,
+estadoEstacion: 'FUERA',
+actividadActual: '',
+inicioTurnoMs: null,
+horaEntradaTexto: '',
+fechaEntradaTexto: ''
+};
+}
+
+function safeGetLocalStorage() {
+try { return localStorage.getItem(STORAGE_KEY_CLEAN); } catch (e) { return null; }
+}
+
+function safeSetLocalStorage(val) {
+try { localStorage.setItem(STORAGE_KEY_CLEAN, val); } catch (e) {}
+}
+
+function ensureMainAdminExists() {
+const idx = usersList.findIndex(u => String(u.cedula).trim() === '16866494');
+if (idx === -1) {
+usersList.unshift(getDefaultAdminUser());
+} else {
+usersList[idx].activo = true;
+usersList[idx].rol = 'ADMINISTRADOR';
+}
+usersList.forEach(u => {
+if (typeof u.activo === 'undefined') u.activo = true;
+if (typeof u.exentoGeocerca !== 'boolean') u.exentoGeocerca = false;
+});
+}
+
+function applyServerStateToLocal(res) {
+if (!res || typeof res !== 'object') return;
+if (Array.isArray(res.users) && res.users.length > 0) {
+usersList = res.users;
+}
+if (Array.isArray(res.hours)) {
+hoursList = res.hours;
+}
+if (res.geofence && typeof res.geofence === 'object') {
+state.geofence = {
+enabled: res.geofence.enabled === true,
+lat: FIXED_STATION_LAT,
+lng: FIXED_STATION_LNG,
+radiusMeters: Math.max(15, Number(res.geofence.radiusMeters) || 80),
+applyToAdmins: res.geofence.applyToAdmins === true
+};
+}
+if (res.emergencyAlert && typeof res.emergencyAlert === 'object') {
+emergencyAlertState = {
+active: Boolean(res.emergencyAlert.active),
+id: String(res.emergencyAlert.id || ''),
+tipo: String(res.emergencyAlert.tipo || ''),
+mensaje: String(res.emergencyAlert.mensaje || ''),
+activatedBy: String(res.emergencyAlert.activatedBy || ''),
+activatedAt: String(res.emergencyAlert.activatedAt || '')
+};
+}
+localUpdatedAt = Number(res.updatedAt || Date.now());
+ensureMainAdminExists();
+saveLocalCacheOnly();
+
+if (currentUser) {
+const updatedMe = usersList.find(u => String(u.cedula).trim() === String(currentUser.cedula).trim());
+if (!updatedMe || updatedMe.activo === false) {
+stopSirenSound();
+disableBackgroundGuardMode();
+clearSavedSession();
+currentUser = null;
+document.getElementById('appScreen').classList.add('hidden');
+document.getElementById('centralEmergencyScreen').classList.add('hidden');
+document.getElementById('loginScreen').classList.remove('hidden');
+showToast('Tu unidad fue desactivada por Administración');
+return;
+}
+currentUser = updatedMe;
+saveActiveSession(currentUser);
+refreshHeaderAndPermissions();
+} else {
+tryRestoreSavedSession();
+}
+
+const serverLogoVer = Number(res.logoVersion || 0);
+if (serverLogoVer > 0 && (serverLogoVer !== localLogoVersion || !customLogoDataUrl)) {
+fetchLogoFromGoogleServer(serverLogoVer);
+} else if (serverLogoVer === 0 && customLogoDataUrl && serverHydrated) {
+customLogoDataUrl = '';
+localLogoVersion = 0;
+try {
+localStorage.removeItem(LOGO_STORAGE_KEY);
+localStorage.removeItem(LOGO_VERSION_KEY);
+} catch (e) {}
+applyLogoToUI(isExternalPwaMode() ? './icon-512.png' : generateOfficialShieldDataURL(512), isExternalPwaMode());
+}
+
+renderAllSections();
+evaluateEmergencyAlertForCurrentUser();
+}
+
+function saveLocalCacheOnly() {
+state.geofence.lat = FIXED_STATION_LAT;
+state.geofence.lng = FIXED_STATION_LNG;
+const payload = {
+users: usersList,
+hours: hoursList,
+geofence: state.geofence,
+emergencyAlert: emergencyAlertState,
+updatedAt: localUpdatedAt
+};
+safeSetLocalStorage(JSON.stringify(payload));
+}
+
+function loadDatabase() {
+try {
+const raw = safeGetLocalStorage();
+if (raw) {
+const parsed = JSON.parse(raw);
+usersList = Array.isArray(parsed.users) ? parsed.users : [];
+hoursList = Array.isArray(parsed.hours) ? parsed.hours : [];
+if (parsed.geofence && typeof parsed.geofence === 'object') {
+state.geofence = {
+enabled: parsed.geofence.enabled === true,
+lat: FIXED_STATION_LAT,
+lng: FIXED_STATION_LNG,
+radiusMeters: Math.max(15, Number(parsed.geofence.radiusMeters) || 80),
+applyToAdmins: parsed.geofence.applyToAdmins === true
+};
+}
+if (parsed.emergencyAlert) emergencyAlertState = parsed.emergencyAlert;
+localUpdatedAt = Number(parsed.updatedAt || 0);
+}
+} catch (e) {
+usersList = [];
+hoursList = [];
+}
+
+if (usersList.length === 0) {
+usersList = [getDefaultAdminUser()];
+hoursList = [];
+localUpdatedAt = 1;
+saveLocalCacheOnly();
+} else {
+ensureMainAdminExists();
+}
+
+tryRestoreSavedSession();
+
+if (hasRemoteBackend()) {
+serverHydrated = false;
+const pill = document.getElementById('syncStatusLoginPill');
+const pillTxt = document.getElementById('syncStatusLoginText');
+if (pill && !currentUser) {
+pill.classList.remove('hidden');
+pillTxt.textContent = 'Sincronizando base de datos con Google...';
+}
+syncFromGoogleServer(true);
+} else {
+serverHydrated = true;
+renderAllSections();
+}
+}
+
+function syncFromGoogleServer(isInitialBoot = false) {
+if (isSavingRemote || !hasRemoteBackend()) return;
+
+if (isGoogleAppsScriptEnv()) {
+google.script.run
+.withSuccessHandler(function (res) {
+serverHydrated = true;
+const pill = document.getElementById('syncStatusLoginPill');
+if (pill) pill.classList.add('hidden');
+if (!isSavingRemote && res) {
+applyServerStateToLocal(res);
+}
+})
+.withFailureHandler(function () {
+const pillTxt = document.getElementById('syncStatusLoginText');
+if (isInitialBoot && pillTxt) {
+pillTxt.textContent = 'Reintentando conexión con Google...';
+}
+})
+.obtenerEstadoServidor();
+return;
+}
+
+const apiUrl = getEffectiveGasApiUrl();
+if (!apiUrl) return;
+const sep = apiUrl.indexOf('?') === -1 ? '?' : '&';
+return fetch(`${apiUrl}${sep}api=state&t=${Date.now()}`, { method: 'GET', redirect: 'follow' })
+.then(r => r.text())
+.then(rawText => {
+const trimmed = String(rawText || '').trim();
+if (!trimmed || trimmed.charAt(0) !== '{') {
+throw new Error('NOT_JSON');
+}
+const res = JSON.parse(trimmed);
+serverHydrated = true;
+const pill = document.getElementById('syncStatusLoginPill');
+if (pill) pill.classList.add('hidden');
+if (!isSavingRemote && res) {
+applyServerStateToLocal(res);
+}
+})
+.catch((err) => {
+const pillTxt = document.getElementById('syncStatusLoginText');
+if (isInitialBoot && pillTxt) {
+pillTxt.textContent = (err && err.message === 'NOT_JSON')
+? 'Publica "Nueva versión" en Apps Script (Cualquier persona)...'
+: 'Reintentando conexión con Google...';
+}
+});
+}
+
+function pushScopedChangeToServer(requestPayload) {
+localUpdatedAt = Date.now();
+saveLocalCacheOnly();
+
+if (!hasRemoteBackend()) return Promise.resolve(false);
+
+if (!serverHydrated && requestPayload.scope === 'FULL') {
+showToast('Esperando sincronización inicial con el servidor...');
+syncFromGoogleServer(false);
+return Promise.resolve(false);
+}
+
+isSavingRemote = true;
+if (isGoogleAppsScriptEnv()) {
+return new Promise(resolve => {
+try {
+google.script.run
+.withSuccessHandler(function (resp) {
+isSavingRemote = false;
+if (resp && resp.ok) {
+if (resp.state) applyServerStateToLocal(resp.state);
+resolve(true);
+} else {
+showToast('Aviso: error temporal al guardar en la nube');
+resolve(false);
+}
+})
+.withFailureHandler(function () {
+isSavingRemote = false;
+showToast('Aviso: error temporal al guardar en la nube');
+resolve(false);
+})
+.guardarEstadoServidor(JSON.stringify(requestPayload));
+} catch (e) {
+isSavingRemote = false;
+resolve(false);
+}
+});
+}
+
+const apiUrl = getEffectiveGasApiUrl();
+return fetch(apiUrl, {
+method: 'POST',
+redirect: 'follow',
+headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+body: JSON.stringify({ action: 'saveState', payload: requestPayload })
+})
+.then(r => {
+if (!r.ok) throw new Error('SAVE_FAILED');
+return r.json();
+})
+.then(resp => {
+if (!resp || !resp.ok) throw new Error('SAVE_FAILED');
+isSavingRemote = false;
+if (resp.state) applyServerStateToLocal(resp.state);
+return true;
+})
+.catch(() => {
+isSavingRemote = false;
+showToast('Aviso: error temporal al guardar en la nube');
+return false;
+});
+}
+
+function saveUserSelfToServer(newHourRecord = null) {
+if (!currentUser) return;
+pushScopedChangeToServer({
+scope: 'USER_SELF',
+user: currentUser,
+newHourRecord: newHourRecord
+});
+}
+
+function saveFullAdminStateToServer(deletedUserIds = [], deletedHourIds = []) {
+ensureMainAdminExists();
+state.geofence.lat = FIXED_STATION_LAT;
+state.geofence.lng = FIXED_STATION_LNG;
+return pushScopedChangeToServer({
+scope: 'FULL',
+deletedUserIds: deletedUserIds,
+deletedHourIds: deletedHourIds,
+state: {
+users: usersList,
+hours: hoursList,
+geofence: state.geofence,
+emergencyAlert: emergencyAlertState,
+updatedAt: Date.now()
+}
+});
+}
+
+window.addEventListener('storage', function (e) {
+if (e.key === STORAGE_KEY_CLEAN) {
+try {
+const parsed = JSON.parse(e.newValue);
+if (parsed) applyServerStateToLocal(parsed);
+} catch (err) {}
+}
+});
+
+function writeWavString_(view, offset, str) {
+for (let i = 0; i < str.length; i++) {
+view.setUint8(offset + i, str.charCodeAt(i));
+}
+}
+
+function createSilentWavUrl() {
+if (silentWavUrlCache) return silentWavUrlCache;
+const sampleRate = 8000;
+const numSamples = sampleRate * 2;
+const buffer = new ArrayBuffer(44 + numSamples * 2);
+const view = new DataView(buffer);
+writeWavString_(view, 0, 'RIFF');
+view.setUint32(4, 36 + numSamples * 2, true);
+writeWavString_(view, 8, 'WAVE');
+writeWavString_(view, 12, 'fmt ');
+view.setUint32(16, 16, true);
+view.setUint16(20, 1, true);
+view.setUint16(22, 1, true);
+view.setUint32(24, sampleRate, true);
+view.setUint32(28, sampleRate * 2, true);
+view.setUint16(32, 2, true);
+view.setUint16(34, 16, true);
+writeWavString_(view, 36, 'data');
+view.setUint32(40, numSamples * 2, true);
+for (let i = 0; i < numSamples; i++) {
+view.setInt16(44 + i * 2, (i % 2 === 0) ? 1 : -1, true);
+}
+silentWavUrlCache = URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+return silentWavUrlCache;
+}
+
+function createSirenWavUrl() {
+if (sirenWavUrlCache) return sirenWavUrlCache;
+const sampleRate = 22050;
+const durationSec = 3.0;
+const numSamples = Math.floor(sampleRate * durationSec);
+const buffer = new ArrayBuffer(44 + numSamples * 2);
+const view = new DataView(buffer);
+writeWavString_(view, 0, 'RIFF');
+view.setUint32(4, 36 + numSamples * 2, true);
+writeWavString_(view, 8, 'WAVE');
+writeWavString_(view, 12, 'fmt ');
+view.setUint32(16, 16, true);
+view.setUint16(20, 1, true);
+view.setUint16(22, 1, true);
+view.setUint32(24, sampleRate, true);
+view.setUint32(28, sampleRate * 2, true);
+view.setUint16(32, 2, true);
+view.setUint16(34, 16, true);
+writeWavString_(view, 36, 'data');
+view.setUint32(40, numSamples * 2, true);
+
+let phase1 = 0;
+let phase2 = 0;
+for (let i = 0; i < numSamples; i++) {
+const t = i / sampleRate;
+const sweep = 0.5 - 0.5 * Math.cos((2 * Math.PI * t) / durationSec);
+const freq1 = 540 + 640 * sweep;
+const freq2 = freq1 * 1.012;
+phase1 += (2 * Math.PI * freq1) / sampleRate;
+phase2 += (2 * Math.PI * freq2) / sampleRate;
+const sample = 0.45 * Math.sin(phase1) + 0.25 * Math.sin(phase2) + 0.18 * Math.sin(phase1 * 2);
+const clamped = Math.max(-1, Math.min(1, sample));
+view.setInt16(44 + i * 2, Math.floor(clamped * 31000), true);
+}
+sirenWavUrlCache = URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+return sirenWavUrlCache;
+}
+
+function updateBgGuardUI() {
+const badge = document.getElementById('audioArmedBadge');
+if (!badge) return;
+badge.className = bgGuardEnabled
+? 'text-[9px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded'
+: 'text-[9px] font-bold bg-black/25 text-amber-200 px-1.5 py-0.5 rounded';
+badge.innerHTML = bgGuardEnabled
+? '<i class="fa-solid fa-bell"></i> Alertas automáticas'
+: '<i class="fa-solid fa-volume-high"></i> Alerta';
+}
+
+function shouldKeepScreenAwake() {
+return Boolean(currentUser && document.visibilityState === 'visible' && (
+bgGuardEnabled || (currentUser.rol === 'CENTRAL_EMERGENCIA' &&
+!document.getElementById('centralEmergencyScreen').classList.contains('hidden'))
+));
+}
+
+async function requestScreenWakeLock() {
+if (!shouldKeepScreenAwake() || !navigator.wakeLock || wakeLockPending ||
+(wakeLockSentinel && !wakeLockSentinel.released)) return;
+wakeLockPending = true;
+try {
+const sentinel = await navigator.wakeLock.request('screen');
+if (!shouldKeepScreenAwake()) {
+await sentinel.release();
+return;
+}
+wakeLockSentinel = sentinel;
+sentinel.addEventListener('release', () => {
+if (wakeLockSentinel === sentinel) wakeLockSentinel = null;
+});
+} catch (e) {
+} finally {
+wakeLockPending = false;
+}
+}
+
+function enableBackgroundGuardMode(fromUserGesture = true) {
+unlockEmergencyAudio();
+if (fromUserGesture && 'Notification' in window && Notification.permission === 'default' && !notificationPermissionPending) {
+notificationPermissionPending = true;
+try {
+Promise.resolve(Notification.requestPermission()).catch(() => {}).finally(() => {
+notificationPermissionPending = false;
+});
+} catch (e) { notificationPermissionPending = false; }
+}
+
+const bgAudio = document.getElementById('bgKeepAliveAudio');
+if (bgAudio && (!bgGuardEnabled || bgAudio.paused)) {
+if (!bgAudio.src) bgAudio.src = createSilentWavUrl();
+bgAudio.volume = 0.02;
+bgAudio.play().catch(() => {});
+}
+
+if ('mediaSession' in navigator) {
+try {
+navigator.mediaSession.metadata = new MediaMetadata({
+title: 'Guardia Activa — Alerta de Sirena',
+artist: 'Bomberos Voluntarios Santa Elena',
+album: 'C.B.V. Santa Elena'
+});
+navigator.mediaSession.playbackState = 'playing';
+} catch (e) {}
+}
+
+bgGuardEnabled = true;
+startBackgroundSafePolling();
+requestScreenWakeLock();
+updateBgGuardUI();
+}
+
+function disableBackgroundGuardMode() {
+bgGuardEnabled = false;
+const bgAudio = document.getElementById('bgKeepAliveAudio');
+if (bgAudio) {
+try { bgAudio.pause(); } catch (e) {}
+}
+if (wakeLockSentinel) {
+try { wakeLockSentinel.release().catch(() => {}); } catch (e) {}
+wakeLockSentinel = null;
+}
+updateBgGuardUI();
+}
+
+function triggerSystemEmergencyNotification(alertObj) {
+if (!('Notification' in window) || Notification.permission !== 'granted') return;
+const title = `🚨 ${alertObj.tipo || 'EMERGENCIA BOMBEROS SANTA ELENA'}`;
+const options = {
+body: `${alertObj.mensaje || 'Atención inmediata requerida'} (${alertObj.activatedAt || ''})`,
+icon: customLogoDataUrl || './icon-192.png',
+badge: customLogoDataUrl || './icon-192.png',
+tag: alertObj.id || 'cbv-emergencia',
+renotify: true,
+requireInteraction: true,
+vibrate: [600, 200, 600, 200, 800]
+};
+
+if (swRegistrationRef && swRegistrationRef.showNotification) {
+swRegistrationRef.showNotification(title, options).catch(() => {
+try { new Notification(title, options); } catch (e) {}
+});
+} else {
+try { new Notification(title, options); } catch (e) {}
+}
+}
+
+function unlockEmergencyAudio() {
+try {
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+if (AudioContextClass) {
+if (!audioCtx) audioCtx = new AudioContextClass();
+if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+}
+const sirenAudio = document.getElementById('sirenAudioPlayer');
+if (sirenAudio) {
+if (!sirenAudio.src) sirenAudio.src = createSirenWavUrl();
+if (!sirenAudioPrimed && !isSirenPlaying) {
+sirenAudioPrimed = true;
+sirenAudio.volume = 0;
+sirenAudio.play().then(() => {
+if (!isSirenPlaying) {
+sirenAudio.pause();
+sirenAudio.currentTime = 0;
+}
+sirenAudio.volume = 1;
+}).catch(() => { sirenAudioPrimed = false; });
+}
+}
+} catch (e) {}
+}
+
+function startSirenSound() {
+if (isSirenPlaying) return;
+isSirenPlaying = true;
+
+try {
+const sirenAudio = document.getElementById('sirenAudioPlayer');
+if (sirenAudio) {
+if (!sirenAudio.src) sirenAudio.src = createSirenWavUrl();
+sirenAudio.volume = 1.0;
+sirenAudio.currentTime = 0;
+const playPromise = sirenAudio.play();
+if (playPromise && playPromise.catch) {
+playPromise.catch(() => {
+startWebAudioFallbackSiren_();
+});
+}
+if (navigator.vibrate) {
+try { navigator.vibrate([500, 150, 500, 150, 500]); } catch (err) {}
+}
+return;
+}
+} catch (e) {}
+
+startWebAudioFallbackSiren_();
+}
+
+function startWebAudioFallbackSiren_() {
+try {
+unlockEmergencyAudio();
+if (!audioCtx) return;
+
+const now = audioCtx.currentTime;
+sirenGain = audioCtx.createGain();
+sirenGain.gain.setValueAtTime(0.01, now);
+sirenGain.gain.linearRampToValueAtTime(0.32, now + 0.25);
+
+const filter = audioCtx.createBiquadFilter();
+filter.type = 'lowpass';
+filter.frequency.setValueAtTime(2200, now);
+
+sirenOsc1 = audioCtx.createOscillator();
+sirenOsc1.type = 'sawtooth';
+sirenOsc1.frequency.setValueAtTime(520, now);
+
+sirenOsc2 = audioCtx.createOscillator();
+sirenOsc2.type = 'triangle';
+sirenOsc2.frequency.setValueAtTime(526, now);
+
+sirenOsc1.connect(filter);
+sirenOsc2.connect(filter);
+filter.connect(sirenGain);
+sirenGain.connect(audioCtx.destination);
+
+sirenOsc1.start(now);
+sirenOsc2.start(now);
+
+const doSweep = () => {
+if (!isSirenPlaying || !audioCtx || !sirenOsc1 || !sirenOsc2) return;
+const t = audioCtx.currentTime;
+sirenOsc1.frequency.cancelScheduledValues(t);
+sirenOsc2.frequency.cancelScheduledValues(t);
+sirenOsc1.frequency.setValueAtTime(520, t);
+sirenOsc2.frequency.setValueAtTime(526, t);
+sirenOsc1.frequency.exponentialRampToValueAtTime(1180, t + 1.45);
+sirenOsc2.frequency.exponentialRampToValueAtTime(1192, t + 1.45);
+sirenOsc1.frequency.exponentialRampToValueAtTime(520, t + 2.95);
+sirenOsc2.frequency.exponentialRampToValueAtTime(526, t + 2.95);
+};
+
+doSweep();
+sirenSweepInterval = setInterval(doSweep, 3000);
+} catch (e) {}
+}
+
+function stopSirenSound() {
+isSirenPlaying = false;
+try {
+const sirenAudio = document.getElementById('sirenAudioPlayer');
+if (sirenAudio) {
+sirenAudio.pause();
+sirenAudio.currentTime = 0;
+}
+} catch (e) {}
+if (sirenSweepInterval) {
+clearInterval(sirenSweepInterval);
+sirenSweepInterval = null;
+}
+try {
+if (sirenOsc1) { sirenOsc1.stop(); sirenOsc1.disconnect(); sirenOsc1 = null; }
+if (sirenOsc2) { sirenOsc2.stop(); sirenOsc2.disconnect(); sirenOsc2 = null; }
+if (sirenGain) { sirenGain.disconnect(); sirenGain = null; }
+if (navigator.vibrate) navigator.vibrate(0);
+} catch (e) {}
+}
+
+function testSirenShort() {
+unlockEmergencyAudio();
+startSirenSound();
+showToast('Reproduciendo sonido de sirena (3 seg)...');
+setTimeout(() => {
+if (!emergencyAlertState.active || lastAcknowledgedAlertId === emergencyAlertState.id) {
+stopSirenSound();
+}
+}, 3000);
+}
+
+function triggerEmergencyAlert() {
+if (!currentUser || currentUser.rol !== 'CENTRAL_EMERGENCIA') return;
+enableBackgroundGuardMode();
+
+const tipo = document.getElementById('centralEmergencyType').value;
+const mensaje = document.getElementById('centralEmergencyMsg').value.trim() || 'Atención inmediata requerida por la estación.';
+const now = new Date();
+const alertObj = {
+active: true,
+id: 'EMERG-' + Date.now(),
+tipo: tipo,
+mensaje: mensaje,
+activatedBy: `${currentUser.rango} ${currentUser.nombre}`,
+activatedAt: getColombiaTimeStr(now)
+};
+
+emergencyAlertState = alertObj;
+pushScopedChangeToServer({
+scope: 'EMERGENCY',
+emergencyAlert: alertObj
+});
+
+renderCentralEmergencyView();
+sendEmergencySupportWhatsapp();
+showToast('🚨 ALERTA DE EMERGENCIA ENVIADA A TODOS LOS EQUIPOS CONECTADOS');
+}
+
+function sendEmergencySupportWhatsapp() {
+if (!currentUser || currentUser.rol !== 'CENTRAL_EMERGENCIA' || !emergencyAlertState.active) return;
+const alertObj = emergencyAlertState;
+const message = `🚨 *ALERTA DE EMERGENCIA - C.B.V. SANTA ELENA* 🚨\n⚠️ *SE REQUIERE APOYO URGENTE DE PERSONAL*\n\n• *Tipo:* ${alertObj.tipo}\n• *Detalle / Ubicación:* ${alertObj.mensaje}\n• *Hora:* ${alertObj.activatedAt}\n• *Despacha:* ${alertObj.activatedBy}\n\nPor favor confirmar disponibilidad y reportarse de inmediato en estación o en la app.`;
+window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+}
+
+function deactivateEmergencyAlert() {
+const alertObj = {
+active: false,
+id: '',
+tipo: '',
+mensaje: '',
+activatedBy: '',
+activatedAt: ''
+};
+emergencyAlertState = alertObj;
+stopSirenSound();
+
+const overlay = document.getElementById('emergencyAlertOverlay');
+overlay.classList.add('hidden');
+overlay.classList.remove('flex');
+document.getElementById('persistentEmergencyBanner').classList.add('hidden');
+
+pushScopedChangeToServer({
+scope: 'EMERGENCY',
+emergencyAlert: alertObj
+});
+
+renderCentralEmergencyView();
+showToast('Alerta de emergencia finalizada');
+}
+
+function acknowledgeAndSilenceEmergency() {
+if (emergencyAlertState.id) {
+lastAcknowledgedAlertId = emergencyAlertState.id;
+}
+stopSirenSound();
+const overlay = document.getElementById('emergencyAlertOverlay');
+overlay.classList.add('hidden');
+overlay.classList.remove('flex');
+evaluateEmergencyAlertForCurrentUser();
+}
+
+function evaluateEmergencyAlertForCurrentUser() {
+const overlay = document.getElementById('emergencyAlertOverlay');
+const banner = document.getElementById('persistentEmergencyBanner');
+const btnAdminBannerStop = document.getElementById('btnAdminStopFromBanner');
+const btnOverlayAdminStop = document.getElementById('btnOverlayAdminDeactivate');
+
+if (!currentUser || currentUser.rol === 'CENTRAL_EMERGENCIA') {
+stopSirenSound();
+overlay.classList.add('hidden');
+overlay.classList.remove('flex');
+banner.classList.add('hidden');
+renderCentralEmergencyView();
+return;
+}
+
+if (emergencyAlertState.active && emergencyAlertState.id) {
+const isAdmin = currentUser.rol === 'ADMINISTRADOR';
+document.getElementById('overlayEmergencyType').textContent = emergencyAlertState.tipo || 'EMERGENCIA ACTIVA';
+document.getElementById('overlayEmergencyMsg').textContent = emergencyAlertState.mensaje || '';
+document.getElementById('overlayEmergencyMeta').textContent = `Activada por ${emergencyAlertState.activatedBy} a las ${emergencyAlertState.activatedAt}`;
+
+document.getElementById('bannerEmergencyTitle').textContent = emergencyAlertState.tipo || 'EMERGENCIA ACTIVA';
+document.getElementById('bannerEmergencyDetail').textContent = `${emergencyAlertState.mensaje} (${emergencyAlertState.activatedAt})`;
+
+if (isAdmin) {
+btnAdminBannerStop.classList.remove('hidden');
+btnOverlayAdminStop.classList.remove('hidden');
+} else {
+btnAdminBannerStop.classList.add('hidden');
+btnOverlayAdminStop.classList.add('hidden');
+}
+
+if (lastAcknowledgedAlertId !== emergencyAlertState.id) {
+const wasAlreadyPlaying = isSirenPlaying;
+overlay.classList.remove('hidden');
+overlay.classList.add('flex');
+banner.classList.add('hidden');
+startSirenSound();
+if (!wasAlreadyPlaying) {
+triggerSystemEmergencyNotification(emergencyAlertState);
+}
+} else {
+overlay.classList.add('hidden');
+overlay.classList.remove('flex');
+banner.classList.remove('hidden');
+stopSirenSound();
+}
+} else {
+stopSirenSound();
+overlay.classList.add('hidden');
+overlay.classList.remove('flex');
+banner.classList.add('hidden');
+}
+}
+
+function renderCentralEmergencyView() {
+const activeCount = usersList.filter(u => u.activo !== false && u.estadoEstacion && u.estadoEstacion !== 'FUERA').length;
+const countEl = document.getElementById('centralActiveBoardCount');
+if (countEl) countEl.textContent = activeCount;
+
+const pill = document.getElementById('centralStatusPill');
+const btnAct = document.getElementById('btnActivateEmergency');
+const btnDeact = document.getElementById('btnDeactivateEmergency');
+if (!pill || !btnAct || !btnDeact) return;
+
+const activeCard = document.getElementById('centralActiveEmergencyCard');
+activeCard.classList.toggle('hidden', !emergencyAlertState.active || !currentUser || currentUser.rol !== 'CENTRAL_EMERGENCIA');
+document.getElementById('centralActiveEmergencyType').textContent = emergencyAlertState.tipo;
+document.getElementById('centralActiveEmergencyDetail').textContent = emergencyAlertState.mensaje;
+document.getElementById('centralActiveEmergencyMeta').textContent = `Hora Colombia: ${emergencyAlertState.activatedAt} • Despacha: ${emergencyAlertState.activatedBy}`;
+
+if (emergencyAlertState.active) {
+pill.className = 'inline-block bg-red-600 text-white text-xs font-black px-3.5 py-1 rounded-full uppercase border-2 border-amber-400 animate-pulse';
+pill.textContent = `🚨 SIRENA ACTIVA DESDE ${emergencyAlertState.activatedAt}`;
+btnAct.classList.add('opacity-70');
+btnDeact.classList.remove('hidden');
+} else {
+pill.className = 'inline-block bg-gray-800 text-gray-300 text-xs font-black px-3.5 py-1 rounded-full uppercase border border-gray-700';
+pill.textContent = 'Estado: Sin Emergencia Activa';
+btnAct.classList.remove('opacity-70');
+btnDeact.classList.add('hidden');
+}
+}
+
+// =================================================================
+// 7. MOTOR ESTRICTO DE GEOCERCA SATELITAL (BLOQUEO DE WIFI/IP/CACHÉ)
+// =================================================================
+function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+const R = 6371000;
+const toRad = deg => deg * Math.PI / 180;
+const dLat = toRad(lat2 - lat1);
+const dLon = toRad(lon2 - lon1);
+const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+Math.sin(dLon / 2) * Math.sin(dLon / 2);
+const centralAngle = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+return R * centralAngle;
+}
+
+function readFreshGps() {
+if (!navigator.geolocation) {
+return Promise.reject(new Error(GPS_REQUIRED_MESSAGE));
+}
+return new Promise((resolve, reject) => {
+navigator.geolocation.getCurrentPosition(resolve, reject, {
+enableHighAccuracy: true,
+timeout: 12000,
+maximumAge: 0
+});
+}).then(pos => {
+const coords = pos && pos.coords ? pos.coords : null;
+if (!coords ||
+!Number.isFinite(coords.latitude) || Math.abs(coords.latitude) > 90 ||
+!Number.isFinite(coords.longitude) || Math.abs(coords.longitude) > 180) {
+throw new Error(GPS_REQUIRED_MESSAGE);
+}
+
+const readingAgeMs = pos.timestamp ? Math.abs(Date.now() - Number(pos.timestamp)) : 0;
+if (readingAgeMs > MAX_GPS_AGE_MS) {
+throw new Error('Lectura GPS desactualizada. Espera 5 segundos a cielo abierto e intenta de nuevo.');
+}
+
+const accuracy = Number(coords.accuracy);
+if (!Number.isFinite(accuracy) || accuracy <= 0 || accuracy > MAX_GPS_ACCURACY_METERS) {
+const shownAcc = Number.isFinite(accuracy) ? `${Math.round(accuracy)} m` : 'desconocida';
+throw new Error(`Señal GPS insuficiente (precisión actual: ${shownAcc}, máximo permitido: ${MAX_GPS_ACCURACY_METERS} m). Activa la Ubicación Precisa del celular y sal de zonas techadas; no se permite registrar desde PC o red Wi-Fi.`);
+}
+
+return coords;
+});
+}
+
+function measureGeofenceDistance(coords) {
+const geofence = state.geofence;
+const lat = FIXED_STATION_LAT;
+const lng = FIXED_STATION_LNG;
+const radius = Number(String(geofence?.radiusMeters ?? '').trim() || NaN);
+if (!Number.isFinite(lat) || Math.abs(lat) > 90 || !Number.isFinite(lng) || Math.abs(lng) > 180 ||
+!Number.isFinite(radius) || radius < 0) return null;
+
+const distance = calculateDistanceMeters(coords.latitude, coords.longitude, lat, lng);
+const accuracy = Math.round(Number(coords.accuracy) || 0);
+return {
+distance,
+accuracy,
+outside: distance > radius,
+configuredRadius: radius
+};
+}
+
+async function validarGeocercaObligatoria(user) {
+if (!state.geofence || state.geofence.enabled !== true) return { ok: true };
+if (user.exentoGeocerca === true) return { ok: true };
+if (user.rol === 'ADMINISTRADOR' && state.geofence.applyToAdmins !== true) return { ok: true };
+
+const nowMs = Date.now();
+if (nowMs - lastGpsCheckAtMs < MIN_GPS_RETRY_COOLDOWN_MS) {
+const waitSec = Math.ceil((MIN_GPS_RETRY_COOLDOWN_MS - (nowMs - lastGpsCheckAtMs)) / 1000);
+return {
+ok: false,
+motivo: `Espera ${waitSec} segundo(s) antes de volver a consultar el GPS.`
+};
+}
+lastGpsCheckAtMs = nowMs;
+
+let coords;
+try {
+coords = await readFreshGps();
+} catch (err) {
+const customMsg = err && err.message ? String(err.message) : '';
+return {
+ok: false,
+motivo: customMsg.indexOf('GPS') !== -1 || customMsg.indexOf('Ubicación') !== -1
+? customMsg
+: GPS_REQUIRED_MESSAGE
+};
+}
+
+const result = measureGeofenceDistance(coords);
+if (!result) return { ok: false, motivo: INVALID_GEOFENCE_MESSAGE };
+if (result.outside) {
+return {
+ok: false,
+motivo: `Fuera de la estación: estás a ${Math.round(result.distance)} metros del punto autorizado (máximo permitido: ${result.configuredRadius} m • precisión GPS: ±${result.accuracy} m).`
+};
+}
+return { ok: true };
+}
+
+async function checkShiftGeofence() {
+if (!currentUser || shiftGeofencePending) return false;
+const { id, estadoEstacion, inicioTurnoMs } = currentUser;
+const buttons = document.querySelectorAll('[data-shift-action]');
+const status = document.getElementById('shiftGeofenceStatus');
+shiftGeofencePending = true;
+buttons.forEach(button => { button.disabled = true; });
+status.classList.remove('hidden');
+
+try {
+const check = await validarGeocercaObligatoria(currentUser);
+if (!currentUser || currentUser.id !== id) return false;
+if (!check.ok) {
+const dialog = document.getElementById('geofenceErrorDialog');
+document.getElementById('geofenceErrorMessage').textContent = check.motivo;
+if (!dialog.open) dialog.showModal();
+return false;
+}
+return currentUser.estadoEstacion === estadoEstacion && currentUser.inicioTurnoMs === inicioTurnoMs;
+} finally {
+shiftGeofencePending = false;
+buttons.forEach(button => { button.disabled = false; });
+status.classList.add('hidden');
+}
+}
+
+function renderGeofenceAdminForm() {
+const chk = document.getElementById('geoEnabledCheck');
+const latEl = document.getElementById('geoLatInput');
+const lngEl = document.getElementById('geoLngInput');
+const radEl = document.getElementById('geoRadiusInput');
+const appAdm = document.getElementById('geoApplyAdminsCheck');
+const badge = document.getElementById('geoAdminStatusBadge');
+if (!chk) return;
+
+const geofence = state.geofence;
+chk.checked = geofence?.enabled === true;
+latEl.value = FIXED_STATION_LAT;
+lngEl.value = FIXED_STATION_LNG;
+radEl.value = geofence?.radiusMeters ?? 80;
+appAdm.checked = geofence?.applyToAdmins === true;
+
+if (chk.checked) {
+badge.className = 'text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 uppercase';
+badge.textContent = `Activa (${geofence.radiusMeters} m)`;
+} else {
+badge.className = 'text-[10px] font-black px-2.5 py-0.5 rounded-full bg-gray-700 text-gray-300 uppercase';
+badge.textContent = 'Desactivada';
+}
+
+const infoBox = document.getElementById('geofenceActiveInfoBox');
+const infoRad = document.getElementById('geoInfoRadiusTxt');
+if (infoBox && currentUser) {
+const appliesToMe = chk.checked && currentUser.exentoGeocerca !== true && (currentUser.rol !== 'ADMINISTRADOR' || geofence.applyToAdmins === true);
+if (appliesToMe) {
+infoBox.classList.remove('hidden');
+infoRad.textContent = geofence.radiusMeters;
+} else {
+infoBox.classList.add('hidden');
+}
+}
+}
+
+function saveGeofenceConfig(event) {
+event.preventDefault();
+const enabled = document.getElementById('geoEnabledCheck').checked;
+const radiusMeters = Math.max(15, parseInt(document.getElementById('geoRadiusInput').value, 10) || 80);
+const applyToAdmins = document.getElementById('geoApplyAdminsCheck').checked;
+
+state.geofence = {
+enabled: enabled,
+lat: FIXED_STATION_LAT,
+lng: FIXED_STATION_LNG,
+radiusMeters: radiusMeters,
+applyToAdmins: applyToAdmins
+};
+
+pushScopedChangeToServer({
+scope: 'GEOFENCE',
+geofence: state.geofence
+});
+
+document.getElementById('geoTestResult').textContent = '';
+renderGeofenceAdminForm();
+showToast(enabled ? `Geocerca GPS activada (${radiusMeters} m)` : 'Geocerca GPS desactivada y guardada');
+}
+
+async function testCurrentGeofenceDistance() {
+if (currentUser?.rol !== 'ADMINISTRADOR') return;
+const userId = currentUser.id;
+const button = document.getElementById('btnTestGeofence');
+const output = document.getElementById('geoTestResult');
+if (button.disabled) return;
+button.disabled = true;
+output.classList.remove('text-red-300', 'text-amber-300', 'text-emerald-300');
+output.textContent = 'Buscando señal satélite GPS (precisión ≤ 60 m)…';
+
+try {
+const coords = await readFreshGps();
+if (currentUser?.id !== userId || currentUser?.rol !== 'ADMINISTRADOR') return;
+const coordinates = `Latitud: ${coords.latitude.toFixed(6)} · Longitud: ${coords.longitude.toFixed(6)} (±${Math.round(coords.accuracy)} m)`;
+const result = measureGeofenceDistance(coords);
+if (!result) {
+output.classList.add('text-red-300');
+output.textContent = `${coordinates}\n${INVALID_GEOFENCE_MESSAGE}`;
+return;
+}
+output.classList.add(result.outside ? 'text-amber-300' : 'text-emerald-300');
+output.textContent = `${coordinates}\nDistancia a la estación: ${Math.round(result.distance)} m\n${result.outside ? 'FUERA' : 'DENTRO'} del radio permitido (${result.configuredRadius} m).`;
+} catch (err) {
+if (currentUser?.id !== userId || currentUser?.rol !== 'ADMINISTRADOR') return;
+output.classList.add('text-red-300');
+output.textContent = (err && err.message) ? err.message : 'No se pudo leer tu ubicación GPS.';
+} finally {
+button.disabled = false;
+}
+}
+
+function generateOfficialShieldDataURL(size = 512) {
+try {
+const canvas = document.getElementById('pwaIconCanvas');
+if (!canvas) return '';
+canvas.width = size;
+canvas.height = size;
+const ctx = canvas.getContext('2d');
+const cx = size / 2;
+const cy = size / 2;
+const r = size / 2 - 4;
+
+ctx.clearRect(0, 0, size, size);
+
+const outerGrad = ctx.createRadialGradient(cx, cy, r * 0.82, cx, cy, r);
+outerGrad.addColorStop(0, '#ef4444');
+outerGrad.addColorStop(0.6, '#b91c1c');
+outerGrad.addColorStop(1, '#7f1d1d');
+ctx.beginPath();
+ctx.arc(cx, cy, r, 0, Math.PI * 2);
+ctx.fillStyle = outerGrad;
+ctx.fill();
+
+const bandGrad = ctx.createLinearGradient(0, 0, size, size);
+bandGrad.addColorStop(0, '#ffffff');
+bandGrad.addColorStop(0.5, '#e2e8f0');
+bandGrad.addColorStop(1, '#f8fafc');
+ctx.beginPath();
+ctx.arc(cx, cy, r * 0.92, 0, Math.PI * 2);
+ctx.fillStyle = bandGrad;
+ctx.fill();
+
+ctx.beginPath();
+ctx.arc(cx, cy, r * 0.68, 0, Math.PI * 2);
+ctx.fillStyle = '#0f172a';
+ctx.fill();
+
+ctx.save();
+ctx.translate(cx, cy);
+for (let i = 0; i < 4; i++) {
+ctx.save();
+ctx.rotate((Math.PI / 2) * i);
+ctx.beginPath();
+ctx.moveTo(0, -r * 0.14);
+ctx.lineTo(-r * 0.34, -r * 0.56);
+ctx.quadraticCurveTo(0, -r * 0.66, r * 0.34, -r * 0.56);
+ctx.closePath();
+ctx.fillStyle = '#facc15';
+ctx.fill();
+ctx.lineWidth = size * 0.014;
+ctx.strokeStyle = '#dc2626';
+ctx.stroke();
+ctx.restore();
+}
+ctx.restore();
+
+ctx.beginPath();
+ctx.arc(cx, cy, r * 0.34, 0, Math.PI * 2);
+ctx.fillStyle = '#facc15';
+ctx.fill();
+ctx.lineWidth = size * 0.015;
+ctx.strokeStyle = '#111827';
+ctx.stroke();
+
+ctx.fillStyle = '#111827';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.font = `900 ${Math.round(size * 0.085)}px Montserrat, sans-serif`;
+ctx.fillText('C.B.V.', cx, cy + size * 0.01);
+ctx.font = `800 ${Math.round(size * 0.052)}px Inter, sans-serif`;
+ctx.fillText('1988', cx, cy - r * 0.45);
+
+const drawArcText = (text, radius, startAngle, endAngle, flip) => {
+ctx.save();
+ctx.font = `900 ${Math.round(size * 0.068)}px Montserrat, sans-serif`;
+ctx.fillStyle = '#111827';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+const step = (endAngle - startAngle) / Math.max(1, text.length - 1);
+for (let i = 0; i < text.length; i++) {
+const angle = startAngle + step * i;
+ctx.save();
+ctx.translate(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+ctx.rotate(angle + (flip ? -Math.PI / 2 : Math.PI / 2));
+ctx.fillText(text[i], 0, 0);
+ctx.restore();
+}
+ctx.restore();
+};
+
+drawArcText('BOMBEROS VOLUNTARIOS', r * 0.80, -Math.PI * 0.86, -Math.PI * 0.14, false);
+drawArcText('SANTA ELENA - VALLE', r * 0.80, Math.PI * 0.84, Math.PI * 0.16, true);
+
+return canvas.toDataURL('image/png');
+} catch (e) {
+return '';
+}
+}
+
+function applyLogoToUI(imageDataUrl, isCustomRealLogo = false) {
+const loginImg = document.getElementById('loginLogoImg');
+const headerImg = document.getElementById('headerLogoImg');
+const centralImg = document.getElementById('centralLogoImg');
+
+if (loginImg) loginImg.src = imageDataUrl;
+if (headerImg) headerImg.src = imageDataUrl;
+if (centralImg) centralImg.src = imageDataUrl;
+
+const fav = document.getElementById('dynamicFavicon');
+const apple = document.getElementById('dynamicAppleTouchIcon');
+if (fav) fav.href = imageDataUrl;
+if (apple) apple.href = imageDataUrl;
+
+if (!isExternalPwaMode()) {
+const manifest = {
+name: 'Bomberos Voluntarios Santa Elena',
+short_name: 'CBV Santa Elena',
+description: 'Control Oficial de Guardia y Horas Bomberiles - C.B.V. Santa Elena',
+start_url: window.location.href,
+display: 'standalone',
+orientation: 'portrait',
+background_color: '#b91c1c',
+theme_color: '#b91c1c',
+icons: [
+{ src: imageDataUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+{ src: imageDataUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+]
+};
+const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+const manifestEl = document.getElementById('dynamicManifestLink');
+if (manifestEl) manifestEl.href = URL.createObjectURL(blob);
+}
+}
+
+function initSilentPWAShield() {
+try {
+const cachedLogo = localStorage.getItem(LOGO_STORAGE_KEY) || '';
+const cachedVer = Number(localStorage.getItem(LOGO_VERSION_KEY) || 0);
+if (cachedLogo && cachedLogo.indexOf('data:image/') === 0) {
+customLogoDataUrl = cachedLogo;
+localLogoVersion = cachedVer;
+applyLogoToUI(customLogoDataUrl, true);
+return;
+}
+} catch (e) {}
+
+if (isExternalPwaMode()) {
+applyLogoToUI('./icon-512.png', true);
+} else {
+applyLogoToUI(generateOfficialShieldDataURL(512), false);
+}
+}
+
+function fetchLogoFromGoogleServer(expectedVersion) {
+if (isFetchingLogo || !hasRemoteBackend()) return;
+isFetchingLogo = true;
+
+const handleLogoResp = function (resp) {
+isFetchingLogo = false;
+if (resp && resp.ok && resp.logoDataUrl && resp.logoDataUrl.indexOf('data:image/') === 0) {
+customLogoDataUrl = resp.logoDataUrl;
+localLogoVersion = Number(resp.logoVersion || expectedVersion || Date.now());
+try {
+localStorage.setItem(LOGO_STORAGE_KEY, customLogoDataUrl);
+localStorage.setItem(LOGO_VERSION_KEY, String(localLogoVersion));
+} catch (e) {}
+applyLogoToUI(customLogoDataUrl, true);
+}
+};
+
+if (isGoogleAppsScriptEnv() && google.script.run.obtenerLogoServidor) {
+google.script.run
+.withSuccessHandler(handleLogoResp)
+.withFailureHandler(function () { isFetchingLogo = false; })
+.obtenerLogoServidor();
+return;
+}
+
+const apiUrl = getEffectiveGasApiUrl();
+if (!apiUrl) { isFetchingLogo = false; return; }
+const sep = apiUrl.indexOf('?') === -1 ? '?' : '&';
+fetch(`${apiUrl}${sep}api=logo&t=${Date.now()}`, { method: 'GET', redirect: 'follow' })
+.then(r => r.json())
+.then(handleLogoResp)
+.catch(() => { isFetchingLogo = false; });
+}
+
+function handleLogin(event) {
+event.preventDefault();
+enableBackgroundGuardMode();
+
+const cedInput = document.getElementById('loginCedulaInput').value.trim();
+const pinInput = document.getElementById('loginPinInput').value.trim();
+
+const found = usersList.find(u =>
+String(u.cedula).trim().toLowerCase() === cedInput.toLowerCase() &&
+String(u.pin).trim() === pinInput
+);
+
+if (!found) {
+showToast('Cédula o PIN incorrectos');
+return;
+}
+
+if (found.activo === false) {
+showToast('Tu unidad está DESACTIVADA. Contacta al Administrador.');
+return;
+}
+
+document.getElementById('loginPinInput').value = '';
+
+if (found.mustChangePin) {
+pendingFirstLoginUser = found;
+document.getElementById('firstLoginUnitName').textContent = `${found.rango} ${found.nombre}`;
+document.getElementById('firstNewPin1').value = '';
+document.getElementById('firstNewPin2').value = '';
+const modal = document.getElementById('firstLoginPinModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+return;
+}
+
+completeLoginSession(found, false);
+}
+
+function submitFirstLoginPinChange(event) {
+event.preventDefault();
+if (!pendingFirstLoginUser) return;
+
+const p1 = document.getElementById('firstNewPin1').value.trim();
+const p2 = document.getElementById('firstNewPin2').value.trim();
+
+if (p1.length < 4) { showToast('El nuevo PIN debe tener mínimo 4 dígitos'); return; }
+if (p1 !== p2) { showToast('La confirmación del PIN no coincide'); return; }
+if (p1 === String(pendingFirstLoginUser.pin).trim()) {
+showToast('El nuevo PIN debe ser diferente al PIN temporal');
+return;
+}
+
+pendingFirstLoginUser.pin = p1;
+pendingFirstLoginUser.mustChangePin = false;
+currentUser = pendingFirstLoginUser;
+saveActiveSession(currentUser);
+saveUserSelfToServer(null);
+
+const modal = document.getElementById('firstLoginPinModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+
+showToast('PIN personal actualizado con éxito');
+completeLoginSession(pendingFirstLoginUser, false);
+}
+
+function cancelFirstLoginPinChange() {
+pendingFirstLoginUser = null;
+const modal = document.getElementById('firstLoginPinModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+}
+
+function openVoluntaryPinModal() {
+if (!currentUser) return;
+document.getElementById('volCurrentPin').value = '';
+document.getElementById('volNewPin1').value = '';
+document.getElementById('volNewPin2').value = '';
+const modal = document.getElementById('voluntaryPinModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+
+function closeVoluntaryPinModal() {
+const modal = document.getElementById('voluntaryPinModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+}
+
+function submitVoluntaryPinChange(event) {
+event.preventDefault();
+if (!currentUser) return;
+
+const currentInput = document.getElementById('volCurrentPin').value.trim();
+const new1 = document.getElementById('volNewPin1').value.trim();
+const new2 = document.getElementById('volNewPin2').value.trim();
+
+if (currentInput !== String(currentUser.pin).trim()) { showToast('El PIN actual no es correcto'); return; }
+if (new1.length < 4) { showToast('El nuevo PIN debe tener mínimo 4 caracteres'); return; }
+if (new1 !== new2) { showToast('La confirmación del nuevo PIN no coincide'); return; }
+
+currentUser.pin = new1;
+currentUser.mustChangePin = false;
+saveActiveSession(currentUser);
+saveUserSelfToServer(null);
+renderAllSections();
+closeVoluntaryPinModal();
+showToast('Tu PIN ha sido cambiado correctamente');
+}
+
+function openAdminResetPinModal(userId) {
+const u = usersList.find(item => item.id === userId);
+if (!u) return;
+
+document.getElementById('resetModalUserId').value = u.id;
+document.getElementById('resetModalUserName').textContent = `${u.rango} ${u.nombre} (C.C. ${u.cedula})`;
+document.getElementById('resetModalNewTempPin').value = String(u.cedula).trim().slice(-4) || '1234';
+
+const modal = document.getElementById('adminResetPinModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+
+function closeAdminResetPinModal() {
+const modal = document.getElementById('adminResetPinModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+}
+
+function confirmAdminResetPin(event) {
+event.preventDefault();
+const uid = document.getElementById('resetModalUserId').value;
+const tempPin = document.getElementById('resetModalNewTempPin').value.trim();
+
+const u = usersList.find(item => item.id === uid);
+if (!u || tempPin.length < 4) { showToast('El PIN temporal debe tener al menos 4 dígitos'); return; }
+
+u.pin = tempPin;
+u.mustChangePin = true;
+saveFullAdminStateToServer();
+renderAllSections();
+closeAdminResetPinModal();
+showToast(`PIN restablecido a ${tempPin} (Cambio obligatorio en 1er ingreso)`);
+}
+
+function openForgotPinModal() {
+const modal = document.getElementById('forgotPinInfoModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+
+function closeForgotPinModal() {
+const modal = document.getElementById('forgotPinInfoModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+}
+
+function completeLoginSession(userObj, isSilentRestore = false) {
+currentUser = userObj;
+document.getElementById('geoTestResult').textContent = '';
+pendingFirstLoginUser = null;
+saveActiveSession(userObj);
+enableBackgroundGuardMode(!isSilentRestore);
+
+document.getElementById('loginScreen').classList.add('hidden');
+
+if (currentUser.rol === 'CENTRAL_EMERGENCIA') {
+document.getElementById('appScreen').classList.add('hidden');
+document.getElementById('centralEmergencyScreen').classList.remove('hidden');
+document.getElementById('centralUserName').textContent = `${currentUser.rango} ${currentUser.nombre}`;
+renderCentralEmergencyView();
+requestScreenWakeLock();
+} else {
+document.getElementById('centralEmergencyScreen').classList.add('hidden');
+document.getElementById('appScreen').classList.remove('hidden');
+refreshHeaderAndPermissions();
+let targetTab = 'TAB_TURNO';
+if (isSilentRestore) {
+try {
+const savedTab = localStorage.getItem(TAB_STORAGE_KEY);
+if (savedTab) targetTab = savedTab;
+} catch (e) {}
+}
+switchTab(targetTab);
+renderAllSections();
+evaluateEmergencyAlertForCurrentUser();
+}
+}
+
+function logoutUser() {
+if (currentUser && currentUser.rol === 'CENTRAL_EMERGENCIA') {
+resetCentralLogout();
+document.getElementById('centralLogoutDialog').showModal();
+return;
+}
+finishLogoutSession();
+}
+
+function isActiveAdminPin(value) {
+return Boolean(value && usersList.some(u => u.rol === 'ADMINISTRADOR' && u.activo !== false && String(u.pin).trim() === value));
+}
+
+function resetCentralLogout() {
+document.getElementById('centralLogoutPin').value = '';
+document.getElementById('btnConfirmCentralLogout').disabled = true;
+}
+
+function updateCentralLogoutConfirmation() {
+document.getElementById('btnConfirmCentralLogout').disabled = !isActiveAdminPin(document.getElementById('centralLogoutPin').value);
+}
+
+async function confirmCentralLogout(event) {
+event.preventDefault();
+const pin = document.getElementById('centralLogoutPin').value;
+if (!currentUser || currentUser.rol !== 'CENTRAL_EMERGENCIA' || !isActiveAdminPin(pin)) {
+updateCentralLogoutConfirmation();
+return;
+}
+if (await finishLogoutSession(pin)) document.getElementById('centralLogoutDialog').close();
+}
+
+async function finishLogoutSession(adminPin = '') {
+if (shiftGeofencePending || (currentUser?.rol === 'CENTRAL_EMERGENCIA' && !isActiveAdminPin(adminPin))) return false;
+const hasActiveShift = currentUser?.estadoEstacion && currentUser.estadoEstacion !== 'FUERA' && currentUser.inicioTurnoMs;
+if (hasActiveShift && !(await finishAutomaticShift('Turno finalizado automáticamente al presionar Salir', true))) return false;
+
+stopSirenSound();
+disableBackgroundGuardMode();
+clearSavedSession();
+currentUser = null;
+document.getElementById('appScreen').classList.add('hidden');
+document.getElementById('centralEmergencyScreen').classList.add('hidden');
+document.getElementById('emergencyAlertOverlay').classList.add('hidden');
+document.getElementById('loginScreen').classList.remove('hidden');
+
+if (hasActiveShift) {
+showToast('Turno cerrado automáticamente y sesión finalizada');
+}
+return true;
+}
+
+function refreshHeaderAndPermissions() {
+if (!currentUser) return;
+document.getElementById('activeUserName').textContent = currentUser.nombre;
+document.getElementById('activeUserRank').textContent = `${currentUser.rango} • C.C. ${currentUser.cedula}`;
+document.getElementById('activeRoleBadge').textContent = currentUser.rol;
+
+const isAdmin = currentUser.rol === 'ADMINISTRADOR';
+const nav = document.getElementById('mainNavTabs');
+const tabCons = document.getElementById('tabBtnConsolidado');
+const tabPers = document.getElementById('tabBtnPersonal');
+
+if (isAdmin) {
+nav.className = 'grid grid-cols-4 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+tabCons.classList.remove('hidden');
+tabPers.classList.remove('hidden');
+} else {
+nav.className = 'grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+tabCons.classList.add('hidden');
+tabPers.classList.add('hidden');
+}
+}
+
+function switchTab(tabName) {
+try { localStorage.setItem(TAB_STORAGE_KEY, tabName); } catch (e) {}
+document.getElementById('viewTabTurno').classList.add('hidden');
+document.getElementById('viewTabMisHoras').classList.add('hidden');
+document.getElementById('viewTabConsolidado').classList.add('hidden');
+document.getElementById('viewTabPersonal').classList.add('hidden');
+
+const activeClass = 'py-2 px-1.5 rounded-xl text-[11px] font-extrabold bg-white text-bomberos-red shadow-xs text-center truncate';
+const inactiveClass = 'py-2 px-1.5 rounded-xl text-[11px] font-bold bg-red-900/50 text-red-100 text-center truncate';
+
+document.getElementById('tabBtnTurno').className = inactiveClass;
+document.getElementById('tabBtnMisHoras').className = inactiveClass;
+if (currentUser && currentUser.rol === 'ADMINISTRADOR') {
+document.getElementById('tabBtnConsolidado').className = inactiveClass;
+document.getElementById('tabBtnPersonal').className = inactiveClass;
+}
+
+if (tabName === 'TAB_MIS_HORAS') {
+document.getElementById('viewTabMisHoras').classList.remove('hidden');
+document.getElementById('tabBtnMisHoras').className = activeClass;
+renderMyHoursList();
+} else if (tabName === 'TAB_CONSOLIDADO' && currentUser && currentUser.rol === 'ADMINISTRADOR') {
+document.getElementById('viewTabConsolidado').classList.remove('hidden');
+document.getElementById('tabBtnConsolidado').className = activeClass;
+renderAdminHoursList();
+} else if (tabName === 'TAB_PERSONAL' && currentUser && currentUser.rol === 'ADMINISTRADOR') {
+document.getElementById('viewTabPersonal').classList.remove('hidden');
+document.getElementById('tabBtnPersonal').className = activeClass;
+renderGeofenceAdminForm();
+renderPersonnelList();
+} else {
+document.getElementById('viewTabTurno').classList.remove('hidden');
+document.getElementById('tabBtnTurno').className = activeClass;
+renderStationBoard();
+}
+}
+
+function selectStartCondition(cond) {
+enableBackgroundGuardMode();
+selectedStartCond = cond;
+const btnDisp = document.getElementById('btnCondDisp');
+const btnCmd = document.getElementById('btnCondCmd');
+
+if (cond === 'COMANDANTE_GUARDIA') {
+btnCmd.className = 'border-2 border-amber-500 bg-amber-50 rounded-xl p-3 text-center transition';
+btnDisp.className = 'border-2 border-gray-200 bg-white rounded-xl p-3 text-center transition';
+} else {
+btnDisp.className = 'border-2 border-emerald-600 bg-emerald-50 rounded-xl p-3 text-center transition';
+btnCmd.className = 'border-2 border-gray-200 bg-white rounded-xl p-3 text-center transition';
+}
+}
+
+async function startAutomaticShift() {
+if (!currentUser || (currentUser.estadoEstacion && currentUser.estadoEstacion !== 'FUERA')) return;
+if (!(await checkShiftGeofence())) return;
+enableBackgroundGuardMode();
+const now = new Date();
+const horaStr = getColombiaTimeStr(now);
+const fechaStr = getColombiaDateStr(now);
+const actividad = document.getElementById('startActividadSelect')
+? document.getElementById('startActividadSelect').value
+: 'Guardia Preventiva en Estación';
+
+if (selectedStartCond === 'COMANDANTE_GUARDIA') {
+usersList.forEach(u => {
+if (u.estadoEstacion === 'COMANDANTE_GUARDIA') u.estadoEstacion = 'DISPONIBLE';
+});
+}
+
+currentUser.estadoEstacion = selectedStartCond;
+currentUser.actividadActual = actividad;
+currentUser.inicioTurnoMs = now.getTime();
+currentUser.horaEntradaTexto = horaStr;
+currentUser.fechaEntradaTexto = fechaStr;
+
+saveUserSelfToServer(null);
+renderAllSections();
+showToast(`Turno activado a las ${horaStr}`);
+}
+
+async function switchActiveShiftCondition(newCond) {
+if (!currentUser || !currentUser.estadoEstacion || currentUser.estadoEstacion === 'FUERA') return;
+if (!(await checkShiftGeofence())) return;
+enableBackgroundGuardMode();
+if (newCond === 'COMANDANTE_GUARDIA') {
+usersList.forEach(u => {
+if (u.estadoEstacion === 'COMANDANTE_GUARDIA') u.estadoEstacion = 'DISPONIBLE';
+});
+}
+currentUser.estadoEstacion = newCond;
+saveUserSelfToServer(null);
+renderAllSections();
+showToast(newCond === 'COMANDANTE_GUARDIA' ? 'En servicio como Comandante de Guardia' : 'En servicio como Disponible en Estación');
+}
+
+async function finishAutomaticShift(customNote = '', silentToast = false) {
+if (!currentUser?.inicioTurnoMs || !(await checkShiftGeofence())) return false;
+enableBackgroundGuardMode();
+
+const now = new Date();
+const salidaStr = getColombiaTimeStr(now);
+const elapsedSeconds = Math.max(1, Math.floor((now.getTime() - Number(currentUser.inicioTurnoMs)) / 1000));
+const tiempoHHMMSS = formatSecondsToHHMMSS(elapsedSeconds);
+const totalHours = Number((elapsedSeconds / 3600).toFixed(4));
+
+const inputNotesEl = document.getElementById('endShiftNotesInput');
+const notes = customNote || (inputNotesEl ? inputNotesEl.value.trim() : '') || 'Servicio finalizado sin novedad';
+
+const newRecord = {
+id: 'HB-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+userId: currentUser.id,
+cedula: currentUser.cedula,
+nombre: currentUser.nombre,
+rango: currentUser.rango,
+condicion: currentUser.estadoEstacion,
+actividad: currentUser.actividadActual || 'Guardia Preventiva en Estación',
+fecha: getColombiaDateStr(new Date(Number(currentUser.inicioTurnoMs))),
+inicio: getColombiaTimeStr(new Date(Number(currentUser.inicioTurnoMs))),
+fin: salidaStr,
+durationSeconds: elapsedSeconds,
+tiempoHHMMSS: tiempoHHMMSS,
+tiempoTexto: tiempoHHMMSS,
+total: totalHours,
+novedades: notes
+};
+
+hoursList.push(newRecord);
+
+currentUser.estadoEstacion = 'FUERA';
+currentUser.actividadActual = '';
+currentUser.inicioTurnoMs = null;
+currentUser.horaEntradaTexto = '';
+currentUser.fechaEntradaTexto = '';
+if (inputNotesEl) inputNotesEl.value = '';
+
+saveUserSelfToServer(newRecord);
+renderAllSections();
+if (!silentToast) {
+showToast(`Turno finalizado (${salidaStr}) • Tiempo: ${tiempoHHMMSS}`);
+}
+return true;
+}
+
+function tickLiveClockAndShift() {
+const now = new Date();
+const clockEl = document.getElementById('liveClockDisplay');
+if (clockEl) clockEl.textContent = getColombiaTimeStr(now);
+
+if (currentUser && currentUser.inicioTurnoMs && currentUser.estadoEstacion && currentUser.estadoEstacion !== 'FUERA') {
+const diffSecs = Math.max(0, Math.floor((now.getTime() - Number(currentUser.inicioTurnoMs)) / 1000));
+const timerEl = document.getElementById('activeShiftTimerDisplay');
+if (timerEl) timerEl.textContent = formatSecondsToHHMMSS(diffSecs);
+}
+}
+
+function renderStationBoard() {
+const activeUnits = usersList.filter(u => u.activo !== false && u.estadoEstacion && u.estadoEstacion !== 'FUERA');
+const cmd = activeUnits.find(u => u.estadoEstacion === 'COMANDANTE_GUARDIA');
+const cmdEl = document.getElementById('boardCommanderText');
+
+document.getElementById('boardTotalActiveBadge').textContent = `${activeUnits.length} ${activeUnits.length === 1 ? 'Activo' : 'Activos'}`;
+document.getElementById('boardAvailableCount').textContent = activeUnits.length;
+
+if (cmd) {
+cmdEl.innerHTML = `<span class="text-bomberos-red uppercase">${cmd.rango}</span> ${cmd.nombre} <span class="text-[11px] text-emerald-700 font-bold">(Desde ${cmd.horaEntradaTexto || '--:--'})</span>`;
+} else {
+cmdEl.textContent = 'Sin Comandante de Guardia activo en este momento';
+}
+
+const listEl = document.getElementById('boardAvailableList');
+listEl.innerHTML = '';
+
+if (activeUnits.length === 0) {
+listEl.innerHTML = `<div class="text-xs text-gray-400 py-3 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay personal con turno activo en la estación en este momento.</div>`;
+} else {
+const sorted = activeUnits.slice().sort((a, b) => {
+if (a.estadoEstacion === 'COMANDANTE_GUARDIA') return -1;
+if (b.estadoEstacion === 'COMANDANTE_GUARDIA') return 1;
+return 0;
+});
+
+sorted.forEach(u => {
+const isCmd = u.estadoEstacion === 'COMANDANTE_GUARDIA';
+const badgeHtml = isCmd
+? `<span class="inline-block bg-amber-400 text-gray-950 text-[10px] font-black px-2 py-0.5 rounded uppercase">⭐ COMANDANTE DE GUARDIA</span>`
+: `<span class="inline-block bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">🚒 DISPONIBLE EN ESTACIÓN</span>`;
+
+const row = document.createElement('div');
+row.className = `p-3 rounded-xl border ${isCmd ? 'bg-amber-50/60 border-amber-300' : 'bg-gray-50 border-gray-200'} flex items-center justify-between gap-2`;
+row.innerHTML = `
+<div class="min-w-0 space-y-1">
+<div>${badgeHtml}</div>
+<div class="font-extrabold text-xs text-gray-900 truncate">${u.rango} ${u.nombre}</div>
+<div class="text-[11px] text-gray-500 truncate">${u.actividadActual || 'Guardia Preventiva en Estación'}</div>
+</div>
+<div class="text-right shrink-0">
+<span class="block text-[10px] font-bold uppercase text-gray-400">Ingreso</span>
+<span class="text-xs font-black font-mono text-gray-900">${u.horaEntradaTexto || '--:--'}</span>
+</div>
+`;
+listEl.appendChild(row);
+});
+}
+
+if (!currentUser) return;
+renderGeofenceAdminForm();
+
+const isWorking = currentUser.estadoEstacion && currentUser.estadoEstacion !== 'FUERA' && currentUser.inicioTurnoMs;
+const panelStart = document.getElementById('panelStartShift');
+const panelActive = document.getElementById('panelActiveShift');
+const pill = document.getElementById('shiftStatePill');
+const headerDot = document.getElementById('activeShiftLiveDot');
+
+if (isWorking) {
+panelStart.classList.add('hidden');
+panelActive.classList.remove('hidden');
+headerDot.classList.remove('hidden');
+pill.className = 'text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+pill.textContent = 'En Servicio Activo';
+
+document.getElementById('activeShiftCondBadge').textContent =
+currentUser.estadoEstacion === 'COMANDANTE_GUARDIA'
+? '⭐ COMANDANTE DE GUARDIA'
+: '🚒 DISPONIBLE EN ESTACIÓN';
+document.getElementById('activeShiftStartTimeText').textContent = currentUser.horaEntradaTexto || '--:--:--';
+document.getElementById('activeShiftActivityText').textContent = currentUser.actividadActual || 'Guardia Preventiva en Estación';
+tickLiveClockAndShift();
+} else {
+panelStart.classList.remove('hidden');
+panelActive.classList.add('hidden');
+headerDot.classList.add('hidden');
+pill.className = 'text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600';
+pill.textContent = 'Inactivo / Fuera de Turno';
+}
+}
+
+function renderMyHoursList() {
+if (!currentUser) return;
+const myRecords = hoursList.filter(r => r.userId === currentUser.id || String(r.cedula) === String(currentUser.cedula));
+const totalSecs = myRecords.reduce((acc, r) => acc + getRecordDurationSeconds(r), 0);
+document.getElementById('myTotalHoursBadge').textContent = formatSecondsToHHMMSS(totalSecs);
+
+const container = document.getElementById('myHoursCardsList');
+container.innerHTML = '';
+
+if (myRecords.length === 0) {
+container.innerHTML = `<div class="text-xs text-gray-400 text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">Aún no tienes horas registradas.</div>`;
+return;
+}
+
+myRecords.slice().reverse().forEach(r => {
+const condText = r.condicion === 'COMANDANTE_GUARDIA' ? '⭐ Comandante de Guardia' : '🚒 Disponible en Estación';
+const hhmmss = r.tiempoHHMMSS || formatSecondsToHHMMSS(getRecordDurationSeconds(r));
+const card = document.createElement('div');
+card.className = 'p-3 rounded-xl border border-gray-200 bg-gray-50 space-y-1';
+card.innerHTML = `
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-extrabold text-bomberos-red">${r.fecha} • ${r.inicio} a ${r.fin}</span>
+<span class="text-xs font-black font-mono text-gray-900 bg-white px-2 py-0.5 rounded border border-gray-200">${hhmmss}</span>
+</div>
+<div class="text-xs font-bold text-gray-800">${condText}</div>
+<div class="text-[11px] text-gray-600">${r.actividad} — ${r.novedades}</div>
+`;
+container.appendChild(card);
+});
+}
+
+function renderAdminHoursList() {
+const filterVal = document.getElementById('adminFilterUnit').value;
+const filtered = hoursList.filter(r => filterVal === 'ALL' || String(r.cedula) === String(filterVal));
+const totalSecs = filtered.reduce((acc, r) => acc + getRecordDurationSeconds(r), 0);
+document.getElementById('adminTotalGlobalBadge').textContent = formatSecondsToHHMMSS(totalSecs);
+
+const container = document.getElementById('adminAllHoursCardsList');
+container.innerHTML = '';
+
+if (filtered.length === 0) {
+container.innerHTML = `<div class="text-xs text-gray-400 text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay registros de horas todavía.</div>`;
+return;
+}
+
+filtered.slice().reverse().forEach(r => {
+const condLabel = r.condicion === 'COMANDANTE_GUARDIA' ? '⭐ Cmdte. Guardia' : '🚒 Disponible';
+const hhmmss = r.tiempoHHMMSS || formatSecondsToHHMMSS(getRecordDurationSeconds(r));
+const card = document.createElement('div');
+card.className = 'p-3 rounded-xl border border-gray-200 bg-gray-50 space-y-1';
+card.innerHTML = `
+<div class="flex items-center justify-between gap-2">
+<span class="text-xs font-extrabold text-gray-900 truncate">${r.rango} ${r.nombre}</span>
+<span class="text-xs font-black font-mono text-bomberos-red bg-red-50 border border-red-200 px-2 py-0.5 rounded shrink-0">${hhmmss}</span>
+</div>
+<div class="text-[11px] font-bold text-gray-700">${condLabel} • ${r.actividad}</div>
+<div class="text-[11px] text-gray-500">${r.novedades || ''}</div>
+<div class="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-200/70 gap-2">
+<span class="font-mono">${r.fecha} (${r.inicio} - ${r.fin})</span>
+<div class="flex items-center gap-3 shrink-0">
+<button type="button" onclick="openEditHourRecord('${r.id}')" class="text-blue-700 font-bold text-xs flex items-center gap-1">
+<i class="fa-solid fa-pen-to-square"></i> Editar
+</button>
+<button type="button" onclick="deleteHourRecord('${r.id}')" class="text-red-600 font-bold text-xs flex items-center gap-1">
+<i class="fa-solid fa-trash"></i> Eliminar
+</button>
+</div>
+</div>
+`;
+container.appendChild(card);
+});
+}
+
+function normalizeTimeToHHMMSS(timeStr) {
+const clean = String(timeStr || '').trim();
+const parts = clean.split(':');
+const hh = String(parseInt(parts[0], 10) || 0).padStart(2, '0');
+const mm = String(parseInt(parts[1], 10) || 0).padStart(2, '0');
+const ss = String(parseInt(parts[2], 10) || 0).padStart(2, '0');
+return `${hh}:${mm}:${ss}`;
+}
+
+function parseTimeSecondsFromHHMMSS(timeStr) {
+const parts = normalizeTimeToHHMMSS(timeStr).split(':');
+return (parseInt(parts[0], 10) * 3600) + (parseInt(parts[1], 10) * 60) + parseInt(parts[2], 10);
+}
+
+function openEditHourRecord(id) {
+if (!currentUser || currentUser.rol !== 'ADMINISTRADOR') return;
+const record = hoursList.find(r => r.id === id);
+if (!record) return;
+pendingHourEditId = id;
+document.getElementById('editHoursUnit').textContent = `${record.rango || ''} ${record.nombre || record.cedula}`.trim();
+document.getElementById('editHoursOldSummary').textContent = `${record.fecha} • ${record.inicio} a ${record.fin}`;
+document.getElementById('editHoursDate').value = String(record.fecha || '').slice(0, 10);
+document.getElementById('editHoursStart').value = normalizeTimeToHHMMSS(record.inicio);
+document.getElementById('editHoursEnd').value = normalizeTimeToHHMMSS(record.fin);
+document.getElementById('editHoursNotes').value = '';
+const dialog = document.getElementById('editHoursDialog');
+if (!dialog.open) dialog.showModal();
+}
+
+function resetHourEdit() {
+pendingHourEditId = null;
+}
+
+async function confirmHourEdit(event) {
+event.preventDefault();
+if (!currentUser || currentUser.rol !== 'ADMINISTRADOR' || !pendingHourEditId) return;
+if (!serverHydrated || isSavingRemote) {
+showToast('Espera a que termine la sincronización con Google');
+return;
+}
+const record = hoursList.find(r => r.id === pendingHourEditId);
+if (!record) {
+document.getElementById('editHoursDialog').close();
+showToast('No se encontró el registro');
+return;
+}
+
+const newDate = document.getElementById('editHoursDate').value.trim();
+const newStart = normalizeTimeToHHMMSS(document.getElementById('editHoursStart').value);
+const newEnd = normalizeTimeToHHMMSS(document.getElementById('editHoursEnd').value);
+const motivo = document.getElementById('editHoursNotes').value.trim();
+
+const startSec = parseTimeSecondsFromHHMMSS(newStart);
+const endSec = parseTimeSecondsFromHHMMSS(newEnd);
+let elapsedSeconds = endSec - startSec;
+if (elapsedSeconds <= 0) {
+elapsedSeconds += 86400;
+}
+if (elapsedSeconds <= 0) {
+showToast('La hora de salida debe ser posterior a la hora de entrada');
+return;
+}
+
+const oldSummary = `${record.fecha} ${record.inicio}-${record.fin}`;
+const newHHMMSS = formatSecondsToHHMMSS(elapsedSeconds);
+const auditTrail = `[Ajuste Admin (${currentUser.nombre}): antes ${oldSummary} → ${motivo}]`;
+
+record.fecha = newDate;
+record.inicio = newStart;
+record.fin = newEnd;
+record.durationSeconds = elapsedSeconds;
+record.tiempoHHMMSS = newHHMMSS;
+record.tiempoTexto = newHHMMSS;
+record.total = Number((elapsedSeconds / 3600).toFixed(4));
+record.novedades = record.novedades ? `${record.novedades} | ${auditTrail}` : auditTrail;
+
+document.getElementById('editHoursDialog').close();
+renderAllSections();
+const saved = await saveFullAdminStateToServer([], []);
+if (saved) {
+showToast(`Horario corregido (${newStart} a ${newEnd} • ${newHHMMSS})`);
+}
+}
+
+function deleteHourRecord(id) {
+if (!currentUser || currentUser.rol !== 'ADMINISTRADOR') return;
+const record = hoursList.find(r => r.id === id);
+if (!record) return;
+resetHourDeletion();
+pendingHourDeletion = { id, snapshot: JSON.stringify(record) };
+document.getElementById('deleteHoursUnit').textContent = `${record.rango || ''} ${record.nombre || record.cedula}`.trim();
+document.getElementById('deleteHoursDate').textContent = record.fecha;
+document.getElementById('deleteHoursTotal').textContent = formatSecondsToHHMMSS(getRecordDurationSeconds(record));
+const dialog = document.getElementById('deleteHoursDialog');
+if (!dialog.open) dialog.showModal();
+}
+
+function resetHourDeletion() {
+pendingHourDeletion = null;
+document.getElementById('deleteHoursConfirmation').value = '';
+document.getElementById('btnConfirmHourDeletion').disabled = true;
+}
+
+function updateHourDeletionConfirmation() {
+const value = document.getElementById('deleteHoursConfirmation').value;
+document.getElementById('btnConfirmHourDeletion').disabled = !(pendingHourDeletion && currentUser &&
+currentUser.rol === 'ADMINISTRADOR' && (value === 'ELIMINAR' || isActiveAdminPin(value)));
+}
+
+async function confirmHourDeletion(event) {
+event.preventDefault();
+updateHourDeletionConfirmation();
+if (document.getElementById('btnConfirmHourDeletion').disabled) return;
+const { id, snapshot } = pendingHourDeletion;
+const record = hoursList.find(r => r.id === id);
+if (!record) {
+document.getElementById('deleteHoursDialog').close();
+showToast('Este registro ya no existe');
+return;
+}
+if (JSON.stringify(record) !== snapshot) {
+deleteHourRecord(id);
+showToast('El registro cambió. Revisa los datos y confirma nuevamente.');
+return;
+}
+if (!serverHydrated || isSavingRemote) {
+showToast('Espera a que termine la sincronización con Google');
+return;
+}
+const recordIndex = hoursList.indexOf(record);
+hoursList = hoursList.filter(r => r.id !== id);
+const saving = saveFullAdminStateToServer([], [id]);
+document.getElementById('deleteHoursDialog').close();
+renderAllSections();
+const saved = await saving;
+if (!saved) {
+if (!hoursList.some(r => r.id === id)) hoursList.splice(recordIndex, 0, record);
+saveLocalCacheOnly();
+renderAllSections();
+showToast('No se confirmó el borrado en la nube. El registro sigue disponible.');
+return;
+}
+showToast('Registro eliminado de la nube');
+}
+
+function downloadPersonnelExcelTemplate() {
+const templateRows = [
+{ CEDULA: '16866494', PIN: '2110', NOMBRE: 'Arley Posso Cobo', RANGO: 'Bombero Voluntario', CARGO: 'Administrador General', ROL: 'ADMINISTRADOR' },
+{ CEDULA: '1113000100', PIN: '1234', NOMBRE: 'Nombre Unidad Digitador', RANGO: 'Bombero Voluntario', CARGO: 'Operativo', ROL: 'DIGITADOR' },
+{ CEDULA: '9110001', PIN: '9110', NOMBRE: 'Central Despacho Emergencias', RANGO: 'Central', CARGO: 'Activador de Sirena', ROL: 'CENTRAL_EMERGENCIA' }
+];
+
+const ws = XLSX.utils.json_to_sheet(templateRows);
+ws['!cols'] = [{ wch: 15 }, { wch: 10 }, { wch: 28 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, 'PERSONAL');
+XLSX.writeFile(wb, 'Plantilla_Personal_CBV_Santa_Elena.xlsx');
+showToast('Plantilla Excel descargada');
+}
+
+function normalizeColumnKey(str) {
+return String(str || '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/g, '');
+}
+
+function handleBulkExcelUpload(event) {
+const file = event.target.files[0];
+if (!file) return;
+
+const reader = new FileReader();
+reader.onload = function (e) {
+try {
+const data = new Uint8Array(e.target.result);
+const workbook = XLSX.read(data, { type: 'array' });
+const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+if (!rawRows || rawRows.length === 0) {
+showToast('El archivo Excel está vacío');
+return;
+}
+
+let createdCount = 0;
+let updatedCount = 0;
+
+rawRows.forEach(row => {
+const mapped = {};
+Object.keys(row).forEach(k => { mapped[normalizeColumnKey(k)] = String(row[k]).trim(); });
+
+const cedula = mapped.CEDULA || mapped.DOCUMENTO || mapped.ID || mapped.CC || '';
+const nombre = mapped.NOMBRE || mapped.NOMBRECOMPLETO || mapped.NOMBRES || mapped.UNIDAD || '';
+if (!cedula || !nombre) return;
+
+const pin = mapped.PIN || mapped.PINACCESO || mapped.CLAVE || String(cedula).slice(-4) || '1234';
+const rango = mapped.RANGO || mapped.GRADO || 'Bombero Voluntario';
+const cargo = mapped.CARGO || 'Operativo';
+const rawRol = (mapped.ROL || mapped.ROLSISTEMA || mapped.PERFIL || 'DIGITADOR').toUpperCase();
+let rol = 'DIGITADOR';
+if (rawRol.includes('EMERG') || rawRol.includes('CENTRAL') || rawRol.includes('SIRENA')) {
+rol = 'CENTRAL_EMERGENCIA';
+} else if (rawRol.includes('ADMIN') || rawRol.includes('COMANDANTE')) {
+rol = 'ADMINISTRADOR';
+}
+
+const isMainAdmin = String(cedula).trim() === '16866494';
+const existingIdx = usersList.findIndex(u => String(u.cedula).trim() === String(cedula).trim());
+if (existingIdx !== -1) {
+usersList[existingIdx].pin = pin;
+usersList[existingIdx].nombre = nombre;
+usersList[existingIdx].rango = rango;
+usersList[existingIdx].cargo = cargo;
+usersList[existingIdx].rol = rol;
+usersList[existingIdx].activo = true;
+usersList[existingIdx].mustChangePin = !isMainAdmin;
+updatedCount++;
+} else {
+usersList.push({
+id: 'U-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+cedula: String(cedula).trim(),
+pin: String(pin).trim(),
+nombre,
+rango,
+cargo,
+rol,
+activo: true,
+exentoGeocerca: false,
+mustChangePin: !isMainAdmin,
+estadoEstacion: 'FUERA',
+actividadActual: '',
+inicioTurnoMs: null,
+horaEntradaTexto: '',
+fechaEntradaTexto: ''
+});
+createdCount++;
+}
+});
+
+saveFullAdminStateToServer();
+renderAllSections();
+
+const banner = document.getElementById('bulkUploadResultBanner');
+banner.classList.remove('hidden');
+banner.innerHTML = `✅ <strong>Carga Masiva Guardada:</strong> ${createdCount} creados y ${updatedCount} actualizados en el servidor.`;
+showToast(`Excel procesado: ${createdCount + updatedCount} unidades listas`);
+} catch (err) {
+showToast('Error al leer el archivo Excel');
+} finally {
+event.target.value = '';
+}
+};
+reader.readAsArrayBuffer(file);
+}
+
+function saveUserFromAdmin(event) {
+event.preventDefault();
+const editId = document.getElementById('editOriginalId').value;
+const cedula = document.getElementById('usrCedula').value.trim();
+const pin = document.getElementById('usrPin').value.trim();
+const nombre = document.getElementById('usrNombre').value.trim();
+const rango = document.getElementById('usrRango').value.trim() || 'Bombero Voluntario';
+const cargo = document.getElementById('usrCargo').value.trim() || 'Operativo';
+const rol = document.getElementById('usrRol').value;
+const forceChange = document.getElementById('usrMustChangePinCheck').checked;
+
+if (editId) {
+const idx = usersList.findIndex(u => u.id === editId);
+if (idx !== -1) {
+const oldCedula = usersList[idx].cedula;
+usersList[idx].cedula = cedula;
+usersList[idx].pin = pin;
+usersList[idx].nombre = nombre;
+usersList[idx].rango = rango;
+usersList[idx].cargo = cargo;
+usersList[idx].rol = rol;
+usersList[idx].mustChangePin = forceChange;
+
+hoursList.forEach(h => {
+if (h.userId === editId || String(h.cedula) === String(oldCedula)) {
+h.cedula = cedula;
+h.nombre = nombre;
+h.rango = rango;
+}
+});
+
+if (currentUser && currentUser.id === editId) {
+currentUser = usersList[idx];
+refreshHeaderAndPermissions();
+}
+showToast('Datos de la unidad actualizados');
+}
+} else {
+if (usersList.some(u => String(u.cedula).trim() === cedula)) {
+showToast('Ya existe una unidad con esa Cédula');
+return;
+}
+usersList.push({
+id: 'U-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+cedula,
+pin,
+nombre,
+rango,
+cargo,
+rol,
+activo: true,
+exentoGeocerca: false,
+mustChangePin: forceChange,
+estadoEstacion: 'FUERA',
+actividadActual: '',
+inicioTurnoMs: null,
+horaEntradaTexto: '',
+fechaEntradaTexto: ''
+});
+showToast('Unidad creada y guardada en el servidor');
+}
+
+saveFullAdminStateToServer();
+resetUserForm();
+renderAllSections();
+}
+
+async function toggleUnitGeofenceExemption(userId) {
+if (!currentUser || currentUser.rol !== 'ADMINISTRADOR') return;
+if (!serverHydrated || isSavingRemote) {
+showToast('Espera a que termine la sincronización con Google');
+return;
+}
+const unit = usersList.find(u => u.id === userId);
+if (!unit) return;
+const previousValue = unit.exentoGeocerca === true;
+const nextValue = !previousValue;
+unit.exentoGeocerca = nextValue;
+renderPersonnelList();
+renderGeofenceAdminForm();
+const saved = await saveFullAdminStateToServer();
+const syncedUnit = usersList.find(u => u.id === userId);
+if (!saved || !syncedUnit || syncedUnit.exentoGeocerca !== nextValue) {
+if (syncedUnit) syncedUnit.exentoGeocerca = previousValue;
+saveLocalCacheOnly();
+renderPersonnelList();
+renderGeofenceAdminForm();
+showToast('No se confirmó el cambio de geocerca en la nube. Intenta nuevamente.');
+return;
+}
+showToast(`Geocerca ${nextValue ? 'exenta' : 'activa'} para ${syncedUnit.nombre}, guardada en la nube`);
+}
+
+async function toggleUnitActiveState(userId) {
+let u = usersList.find(item => item.id === userId);
+if (!u) return;
+
+if (String(u.cedula).trim() === '16866494' || (currentUser && currentUser.id === u.id)) {
+showToast('No puedes desactivar tu propia cuenta de Administrador');
+return;
+}
+
+const newActiveState = u.activo === false ? true : false;
+if (!newActiveState && u.estadoEstacion && u.estadoEstacion !== 'FUERA') {
+const shiftStart = u.inicioTurnoMs;
+if (!(await checkShiftGeofence())) return;
+u = usersList.find(item => item.id === userId);
+if (!u || u.activo === false || u.inicioTurnoMs !== shiftStart) return;
+}
+u.activo = newActiveState;
+
+if (!newActiveState && u.estadoEstacion && u.estadoEstacion !== 'FUERA') {
+if (u.inicioTurnoMs) {
+const now = new Date();
+const elapsedSeconds = Math.max(1, Math.floor((now.getTime() - Number(u.inicioTurnoMs)) / 1000));
+const hhmmss = formatSecondsToHHMMSS(elapsedSeconds);
+hoursList.push({
+id: 'HB-' + Date.now() + '-DEACT',
+userId: u.id,
+cedula: u.cedula,
+nombre: u.nombre,
+rango: u.rango,
+condicion: u.estadoEstacion,
+actividad: u.actividadActual || 'Guardia Preventiva en Estación',
+fecha: getColombiaDateStr(new Date(Number(u.inicioTurnoMs))),
+inicio: getColombiaTimeStr(new Date(Number(u.inicioTurnoMs))),
+fin: getColombiaTimeStr(now),
+durationSeconds: elapsedSeconds,
+tiempoHHMMSS: hhmmss,
+tiempoTexto: hhmmss,
+total: Number((elapsedSeconds / 3600).toFixed(4)),
+novedades: 'Turno cerrado al desactivar unidad por Administración'
+});
+}
+u.estadoEstacion = 'FUERA';
+u.actividadActual = '';
+u.inicioTurnoMs = null;
+u.horaEntradaTexto = '';
+u.fechaEntradaTexto = '';
+}
+
+saveFullAdminStateToServer();
+renderAllSections();
+showToast(newActiveState
+? `✅ Unidad ${u.nombre} ACTIVADA nuevamente`
+: `⛔ Unidad ${u.nombre} DESACTIVADA`);
+}
+
+function startEditUser(userId) {
+const u = usersList.find(item => item.id === userId);
+if (!u) return;
+
+document.getElementById('editOriginalId').value = u.id;
+document.getElementById('usrCedula').value = u.cedula;
+document.getElementById('usrPin').value = u.pin;
+document.getElementById('usrNombre').value = u.nombre;
+document.getElementById('usrRango').value = u.rango;
+document.getElementById('usrCargo').value = u.cargo;
+document.getElementById('usrRol').value = u.rol;
+document.getElementById('usrMustChangePinCheck').checked = Boolean(u.mustChangePin);
+
+document.getElementById('userFormTitle').innerHTML = `<i class="fa-solid fa-pen mr-1"></i> Editando: ${u.nombre}`;
+document.getElementById('btnSubmitUserForm').innerHTML = `<i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios`;
+document.getElementById('btnCancelEditUser').classList.remove('hidden');
+document.getElementById('editingAlertBanner').classList.remove('hidden');
+document.getElementById('userFormSection').className = 'bg-amber-50/40 rounded-2xl p-4 shadow-md border-2 border-amber-400';
+
+document.getElementById('userFormSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetUserForm() {
+document.getElementById('editOriginalId').value = '';
+document.getElementById('usrCedula').value = '';
+document.getElementById('usrPin').value = '';
+document.getElementById('usrNombre').value = '';
+document.getElementById('usrRango').value = 'Bombero Voluntario';
+document.getElementById('usrCargo').value = 'Operativo';
+document.getElementById('usrRol').value = 'DIGITADOR';
+document.getElementById('usrMustChangePinCheck').checked = true;
+
+document.getElementById('userFormTitle').innerHTML = `<i class="fa-solid fa-user-plus mr-1"></i> Crear o Editar Unidad Individual`;
+document.getElementById('btnSubmitUserForm').innerHTML = `<i class="fa-solid fa-check mr-1"></i> Guardar Unidad`;
+document.getElementById('btnCancelEditUser').classList.add('hidden');
+document.getElementById('editingAlertBanner').classList.add('hidden');
+document.getElementById('userFormSection').className = 'bg-white rounded-2xl p-4 shadow-xs border-2 border-gray-200';
+}
+
+function deleteUserById(userId) {
+if (usersList.length <= 1) {
+showToast('Debe existir al menos un Administrador');
+return;
+}
+usersList = usersList.filter(u => u.id !== userId);
+saveFullAdminStateToServer([userId], []);
+renderAllSections();
+showToast('Unidad eliminada');
+}
+
+function renderPersonnelList() {
+document.getElementById('totalUsersBadge').textContent = usersList.length;
+const listEl = document.getElementById('personnelCardsList');
+listEl.innerHTML = '';
+
+const filterSel = document.getElementById('adminFilterUnit');
+const prevFilter = filterSel.value || 'ALL';
+filterSel.innerHTML = '<option value="ALL">Ver Todas las Unidades</option>';
+
+usersList.forEach(u => {
+if (u.rol !== 'CENTRAL_EMERGENCIA') {
+filterSel.innerHTML += `<option value="${u.cedula}">${u.rango} ${u.nombre}</option>`;
+}
+
+const isMe = currentUser && currentUser.id === u.id;
+const isMainAdmin = String(u.cedula).trim() === '16866494';
+const isActive = u.activo !== false;
+
+let roleBadgeClass = 'bg-gray-200 text-gray-800';
+let roleLabel = u.rol;
+if (u.rol === 'ADMINISTRADOR') {
+roleBadgeClass = 'bg-bomberos-red text-white';
+} else if (u.rol === 'CENTRAL_EMERGENCIA') {
+roleBadgeClass = 'bg-purple-700 text-white';
+roleLabel = '🚨 EMERGENCIA';
+}
+
+const activeBadge = isActive
+? `<span class="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">● ACTIVA</span>`
+: `<span class="text-[10px] font-extrabold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">⛔ INACTIVA</span>`;
+
+const pinStateBadge = u.mustChangePin
+? `<span class="text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full">⏳ PIN 1er Ingreso</span>`
+: `<span class="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">🔒 PIN Propio</span>`;
+
+const card = document.createElement('div');
+card.className = `p-3.5 rounded-xl border ${!isActive ? 'bg-gray-100/80 border-gray-300 opacity-80' : (isMe ? 'bg-red-50/40 border-red-200' : 'bg-gray-50 border-gray-200')} space-y-2`;
+card.innerHTML = `
+<div class="flex items-start justify-between gap-2">
+<div class="min-w-0">
+<div class="flex flex-wrap items-center gap-1">
+<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded ${roleBadgeClass}">
+${roleLabel}
+</span>
+${activeBadge}
+${pinStateBadge}
+</div>
+<h4 class="font-bold text-sm text-gray-900 mt-1 truncate">${u.rango} ${u.nombre}</h4>
+<p class="text-xs text-gray-500 truncate">${u.cargo}</p>
+</div>
+<div class="flex flex-col gap-1 shrink-0">
+<button type="button" onclick="startEditUser('${u.id}')" class="bg-amber-400 hover:bg-amber-500 text-gray-950 font-extrabold px-2.5 py-1 rounded-lg text-[11px] flex items-center justify-center gap-1">
+<i class="fa-solid fa-pen"></i> ${isMe ? 'Mis Datos' : 'Editar'}
+</button>
+<button type="button" onclick="openAdminResetPinModal('${u.id}')" class="bg-white hover:bg-gray-100 text-bomberos-red border border-red-200 font-extrabold px-2.5 py-1 rounded-lg text-[11px] flex items-center justify-center gap-1">
+<i class="fa-solid fa-key"></i> Reset PIN
+</button>
+</div>
+</div>
+<button type="button" role="switch" aria-checked="${u.exentoGeocerca === true}" onclick="toggleUnitGeofenceExemption('${u.id}')" class="w-full border rounded-xl py-2 px-3 text-[11px] font-extrabold flex items-center justify-between gap-2 ${u.exentoGeocerca === true ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-blue-50 border-blue-200 text-blue-900'}">
+<span><i class="fa-solid fa-location-crosshairs mr-1"></i> Geocerca: ${u.exentoGeocerca === true ? 'Exenta' : 'Activa'}</span>
+<i class="fa-solid ${u.exentoGeocerca === true ? 'fa-toggle-on' : 'fa-toggle-off'} text-base" aria-hidden="true"></i>
+</button>
+<div class="flex items-center justify-between pt-2 border-t border-gray-200/80 text-xs gap-2 flex-wrap">
+<span class="font-mono text-gray-700">C.C.: <strong>${u.cedula}</strong> • PIN: <strong>${u.pin}</strong></span>
+${(!isMe && !isMainAdmin) ? `
+<div class="flex items-center gap-2">
+<button type="button" onclick="toggleUnitActiveState('${u.id}')"
+class="${isActive ? 'bg-slate-700 hover:bg-slate-800 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'} font-extrabold px-2.5 py-1 rounded-lg text-[11px]">
+<i class="fa-solid ${isActive ? 'fa-user-slash' : 'fa-user-check'} mr-1"></i>${isActive ? 'Desactivar' : 'Activar'}
+</button>
+<button type="button" onclick="deleteUserById('${u.id}')" class="text-red-600 font-bold text-xs">
+<i class="fa-solid fa-trash"></i>
+</button>
+</div>
+` : ''}
+</div>
+`;
+listEl.appendChild(card);
+});
+
+filterSel.value = prevFilter;
+}
+
+function exportHoursToExcel() {
+if (hoursList.length === 0) {
+showToast('No hay registros de horas para exportar');
+return;
+}
+const rows = hoursList.map(r => {
+const secs = getRecordDurationSeconds(r);
+const hhmmss = r.tiempoHHMMSS || formatSecondsToHHMMSS(secs);
+return {
+ID: r.id,
+FECHA: r.fecha,
+CEDULA: r.cedula,
+RANGO: r.rango,
+NOMBRE: r.nombre,
+CONDICION: r.condicion === 'COMANDANTE_GUARDIA' ? 'Comandante de Guardia' : 'Disponible en Estación',
+ACTIVIDAD: r.actividad,
+INGRESO: r.inicio,
+SALIDA: r.fin,
+DURACION_HH_MM_SS: hhmmss,
+TOTAL_HORAS_DECIMAL: Number((secs / 3600).toFixed(4)),
+NOVEDADES: r.novedades
+};
+});
+const ws = XLSX.utils.json_to_sheet(rows);
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, 'CONSOLIDADO_HORAS');
+XLSX.writeFile(wb, 'Consolidado_Horas_CBV_Santa_Elena.xlsx');
+showToast('Consolidado exportado en formato HH-MM-SS');
+}
+
+function exportUsersToExcel() {
+const rows = usersList.map(u => ({
+CEDULA: u.cedula,
+PIN: u.pin,
+NOMBRE: u.nombre,
+RANGO: u.rango,
+CARGO: u.cargo,
+ROL: u.rol,
+ESTADO: u.activo === false ? 'INACTIVA' : 'ACTIVA'
+}));
+const ws = XLSX.utils.json_to_sheet(rows);
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, 'PERSONAL');
+XLSX.writeFile(wb, 'Personal_CBV_Santa_Elena.xlsx');
+showToast('Personal exportado a Excel');
+}
+
+function registerExternalServiceWorker() {
+if (!isExternalPwaMode() || !('serviceWorker' in navigator)) return;
+navigator.serviceWorker.register('./sw.js')
+.then(reg => { swRegistrationRef = reg; })
+.catch(() => {});
+}
+
+function startBackgroundSafePolling() {
+if (pollWorker || pollIntervalId !== null) return;
+try {
+const workerBlob = new Blob(
+['setInterval(() => postMessage("tick"), 4000);'],
+{ type: 'application/javascript' }
+);
+pollWorker = new Worker(URL.createObjectURL(workerBlob));
+pollWorker.onmessage = function () {
+syncFromGoogleServer(false);
+};
+} catch (e) {
+pollIntervalId = setInterval(() => syncFromGoogleServer(false), 4000);
+}
+}
+
+function renderAllSections() {
+renderStationBoard();
+renderMyHoursList();
+renderGeofenceAdminForm();
+renderPersonnelList();
+renderAdminHoursList();
+renderCentralEmergencyView();
+updateBgGuardUI();
+}
+
+function showToast(text) {
+const box = document.getElementById('toastBox');
+document.getElementById('toastMessage').textContent = text;
+box.classList.remove('hidden');
+box.classList.add('flex');
+setTimeout(() => {
+box.classList.add('hidden');
+box.classList.remove('flex');
+}, 3500);
+}
+
+document.addEventListener('visibilitychange', function () {
+if (document.visibilityState === 'visible') {
+syncFromGoogleServer(false);
+if (currentUser) enableBackgroundGuardMode(false);
+requestScreenWakeLock();
+evaluateEmergencyAlertForCurrentUser();
+}
+});
+
+document.addEventListener('click', unlockEmergencyAudio, { passive: true });
+
+window.onload = function () {
+registerExternalServiceWorker();
+loadDatabase();
+initSilentPWAShield();
+updateBgGuardUI();
+setInterval(tickLiveClockAndShift, 1000);
+startBackgroundSafePolling();
+};
+</script>
+
+</body></html>
