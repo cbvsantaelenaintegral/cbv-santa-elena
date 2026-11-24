@@ -134,6 +134,9 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
+            <button onclick="syncWithServer(true)" title="Sincronizar datos" class="bg-white/15 hover:bg-white/25 text-white font-bold px-2.5 py-2 rounded-xl text-xs">
+              <i id="btnRefreshIcon" class="fa-solid fa-rotate"></i>
+            </button>
             <button onclick="openOwnPinModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-2.5 py-2 rounded-xl text-xs">
               <i class="fa-solid fa-key"></i> Mi PIN
             </button>
@@ -143,8 +146,8 @@
           </div>
         </div>
 
-        <!-- NAVEGACIÓN DINÁMICA SEGÚN ROL -->
-        <nav id="mainNavGrid" class="grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15">
+        <!-- NAVEGACIÓN ESTRICTA POR ROL (CENTRAL SOLO PARA 'CENTRAL') -->
+        <nav id="mainNavGrid" class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15">
           <button onclick="switchTab('TAB_TURNO')" id="btnTabTurno" class="py-2 px-2 rounded-xl text-xs font-black bg-white text-red-800">
             <i class="fa-solid fa-clock mr-1"></i>Turno
           </button>
@@ -165,25 +168,24 @@
 
       <!-- PESTAÑA 1: TURNO -->
       <section id="TAB_TURNO" class="space-y-4">
-        <!-- IMÁGENES DE REFERENCIA DE CONTROL DE GUARDIA -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center gap-3">
             <img src="./icon-192.png" onerror="this.style.display='none'" alt="Estación Santa Elena"
               class="w-16 h-16 rounded-2xl object-cover bg-red-50 p-1 border-2 border-red-700 shrink-0">
             <div>
-              <div class="text-[10px] font-black uppercase text-red-700">Referencia de Estación</div>
-              <div class="text-xs font-black text-slate-900">C.B.V. Santa Elena • Calle 4 6A-4</div>
-              <div class="text-[11px] text-slate-600 mt-0.5">Geocerca: 3.65855, -76.24802 • Dignidad y Civismo</div>
+              <div class="text-[10px] font-black uppercase text-red-700">Estación Santa Elena</div>
+              <div class="text-xs font-black text-slate-900">Calle 4 6A-4 • Valle del Cauca</div>
+              <div class="text-[11px] text-slate-600 mt-0.5">Geocerca: 3.65855, -76.24802</div>
             </div>
           </div>
           <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center gap-3">
-            <div class="w-16 h-16 rounded-2xl bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-red-800 text-2xl shrink-0">
-              <i class="fa-solid fa-truck-medical"></i>
+            <div id="activityVisualBadge" class="w-16 h-16 rounded-2xl bg-red-50 border-2 border-red-700 flex items-center justify-center text-red-700 text-2xl shrink-0">
+              <i class="fa-solid fa-shield-heart"></i>
             </div>
             <div>
-              <div class="text-[10px] font-black uppercase text-amber-800">Protocolo Operativo</div>
-              <div class="text-xs font-black text-slate-900">Registro de Guardia y Servicios</div>
-              <div class="text-[11px] text-slate-600 mt-0.5">Verifica GPS en estación o indica servicio/capacitación fuera.</div>
+              <div class="text-[10px] font-black uppercase text-red-700">Figura de Actividad Seleccionada</div>
+              <div id="activityVisualTitle" class="text-xs font-black text-slate-900">GUARDIA ORDINARIA</div>
+              <div id="activityVisualSub" class="text-[11px] text-slate-600 mt-0.5">Disponibilidad y vigilancia en cuartel</div>
             </div>
           </div>
         </div>
@@ -192,7 +194,7 @@
           <div class="flex items-center justify-between gap-2">
             <div>
               <h2 class="text-base font-black uppercase text-slate-900">Control de Guardia</h2>
-              <p class="text-xs text-slate-500">Estación Santa Elena (3.65855, -76.24802)</p>
+              <p class="text-xs text-slate-500">Disponibilidad, actividad con figura y validación de geocerca</p>
             </div>
             <span id="geoBadge" class="text-[11px] font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
               GPS Verificado
@@ -213,32 +215,27 @@
           <div id="startShiftForm" class="space-y-3">
             <div class="grid sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Condición de Servicio</label>
-                <select id="shiftCondition" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
-                  <option value="DISPONIBLE">DISPONIBLE EN ESTACIÓN</option>
-                  <option value="COMANDANTE DE GUARDIA">COMANDANTE DE GUARDIA</option>
+                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
+                  <i class="fa-solid fa-user-check text-red-700 mr-1"></i> Disponibilidad / Condición
+                </label>
+                <select id="shiftCondition" onchange="updateActivityFigurePreview()" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                  <option value="DISPONIBLE">🟢 DISPONIBLE EN ESTACIÓN</option>
+                  <option value="COMANDANTE DE GUARDIA">🟡 COMANDANTE DE GUARDIA</option>
+                  <option value="DISPONIBLE FUERA DE ESTACION">🔵 DISPONIBLE FUERA DE ESTACIÓN</option>
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Actividad Principal</label>
-                <select id="shiftActivity" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
-                  <option value="GUARDIA ORDINARIA">GUARDIA ORDINARIA</option>
-                  <option value="ATENCION DE EMERGENCIA">ATENCIÓN DE EMERGENCIA</option>
-                  <option value="CAPACITACION / ENTRENAMIENTO">CAPACITACIÓN / ENTRENAMIENTO</option>
-                  <option value="MANTENIMIENTO MAQUINAS Y EQUIPO">MANTENIMIENTO MÁQUINAS Y EQUIPO</option>
-                  <option value="SERVICIO FUERA DE ESTACION">SERVICIO FUERA DE ESTACIÓN</option>
+                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
+                  <i class="fa-solid fa-shapes text-red-700 mr-1"></i> Actividad Principal
+                </label>
+                <select id="shiftActivity" onchange="updateActivityFigurePreview()" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                  <option value="GUARDIA ORDINARIA">🛡️ GUARDIA ORDINARIA</option>
+                  <option value="ATENCION DE EMERGENCIA">🚨 ATENCIÓN DE EMERGENCIA</option>
+                  <option value="CAPACITACION / ENTRENAMIENTO">🎓 CAPACITACIÓN / ENTRENAMIENTO</option>
+                  <option value="MANTENIMIENTO MAQUINAS Y EQUIPO">🔧 MANTENIMIENTO MÁQUINAS Y EQUIPO</option>
+                  <option value="SERVICIO FUERA DE ESTACION">🚒 SERVICIO FUERA DE ESTACIÓN</option>
                 </select>
               </div>
-            </div>
-
-            <!-- EXCEPCIÓN DE GEOCERCA PARA CAPACITACIÓN O SERVICIO FUERA DE ESTACIÓN -->
-            <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3 space-y-2">
-              <label class="flex items-center gap-2 text-xs font-extrabold text-amber-950 cursor-pointer">
-                <input type="checkbox" id="bypassGeofenceCheck" onchange="toggleBypassReasonInput()" class="w-4 h-4 accent-red-700">
-                <span>Omitir geocerca por capacitación o servicio autorizado fuera de estación</span>
-              </label>
-              <input type="text" id="bypassGeofenceReason" placeholder="Indica el lugar o actividad (Ej: Capacitación en Palmira / Apoyo vial)"
-                class="hidden w-full bg-white border-2 border-amber-300 rounded-xl px-3 py-2 text-xs font-bold">
             </div>
 
             <button onclick="startNewShift()" id="btnStartShift"
@@ -249,7 +246,6 @@
           </div>
         </div>
 
-        <!-- PERSONAL ACTIVO EN ESTACIÓN -->
         <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200">
           <h3 class="text-sm font-black uppercase text-slate-900 mb-3">
             <i class="fa-solid fa-users text-red-700 mr-1"></i> Unidades Activas en Guardia Ahora
@@ -273,7 +269,7 @@
               <thead class="bg-slate-100 text-slate-700 uppercase font-black">
                 <tr>
                   <th class="p-2.5">Fecha</th>
-                  <th class="p-2.5">Condición / Actividad</th>
+                  <th class="p-2.5">Disponibilidad / Actividad</th>
                   <th class="p-2.5">Duración (HH-MM-SS)</th>
                 </tr>
               </thead>
@@ -450,20 +446,35 @@
             </button>
           </div>
 
+          <!-- CONTROL EXCLUSIVO DE ADMINISTRADOR: GEOCERCA GENERAL Y POR UNIDAD -->
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
             <h3 class="text-sm font-black uppercase text-slate-900">
-              <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca de Estación (Servidor)
+              <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca General y por Unidad (Solo Admin)
             </h3>
             <p class="text-xs text-slate-600">Coordenadas fijas: <strong>3.65855, -76.24802</strong> (Calle 4 6A-4, Santa Elena).</p>
             <div class="flex items-center gap-3">
               <label class="text-xs font-extrabold">Radio (m):</label>
               <input type="number" id="admGeoRadius" value="80" min="30" max="500" class="w-24 border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
               <label class="flex items-center gap-1.5 text-xs font-extrabold">
-                <input type="checkbox" id="admGeoActive" checked class="w-4 h-4"> Exigir GPS
+                <input type="checkbox" id="admGeoActive" checked class="w-4 h-4"> Activar / Desactivar Geocerca
               </label>
             </div>
+
+            <div class="border-t border-slate-200 pt-2.5 space-y-2">
+              <label class="block text-[11px] font-black uppercase text-slate-700">
+                Desactivar / Activar Geocerca a Unidad o Unidades Específicas
+              </label>
+              <div class="flex gap-2">
+                <select id="admExemptUnitSelect" class="flex-1 border-2 border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold"></select>
+                <button type="button" onclick="toggleUnitGeofenceExemption()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-2 rounded-xl text-xs uppercase">
+                  Alternar
+                </button>
+              </div>
+              <div id="exemptUnitsChips" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
+            </div>
+
             <button onclick="adminSaveGeofence()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-2.5 rounded-xl text-xs uppercase">
-              Actualizar Regla GPS en Servidor
+              Guardar Regla GPS y Unidades en Servidor
             </button>
           </div>
         </div>
@@ -501,20 +512,40 @@
     const EXTERNAL_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec';
     const FIXED_STATION_LAT = 3.65855;
     const FIXED_STATION_LNG = -76.24802;
-    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v8';
+    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v10';
 
     let currentSession = null;
     let appState = {
-      geofence: { active: true, lat: FIXED_STATION_LAT, lng: FIXED_STATION_LNG, radius: 80 },
+      geofence: { active: true, lat: FIXED_STATION_LAT, lng: FIXED_STATION_LNG, radius: 80, exemptCedulas: [] },
       emergency: { active: false },
       personal: [],
       turnos: []
     };
 
     let selectedUnitCedula = '';
+    let exemptUnitsDraft = [];
+    let isSyncingNow = false;
     let sirenAudioCtx = null;
     let sirenInterval = null;
     let sirenMutedLocally = false;
+
+    const ACTIVITY_FIGURES = {
+      'GUARDIA ORDINARIA': { icon: 'fa-shield-heart', title: 'GUARDIA ORDINARIA', sub: 'Vigilancia y disponibilidad en estación' },
+      'ATENCION DE EMERGENCIA': { icon: 'fa-truck-medical', title: 'ATENCIÓN DE EMERGENCIA', sub: 'Respuesta operativa inmediata a despacho' },
+      'CAPACITACION / ENTRENAMIENTO': { icon: 'fa-graduation-cap', title: 'CAPACITACIÓN / ENTRENAMIENTO', sub: 'Instrucción y prácticas bomberiles' },
+      'MANTENIMIENTO MAQUINAS Y EQUIPO': { icon: 'fa-wrench', title: 'MANTENIMIENTO MÁQUINAS Y EQUIPO', sub: 'Revisión de unidades, bombas y herramientas' },
+      'SERVICIO FUERA DE ESTACION': { icon: 'fa-route', title: 'SERVICIO FUERA DE ESTACIÓN', sub: 'Apoyo o comisión autorizada fuera del cuartel' }
+    };
+
+    function updateActivityFigurePreview() {
+      const act = document.getElementById('shiftActivity').value;
+      const cond = document.getElementById('shiftCondition').value;
+      const cfg = ACTIVITY_FIGURES[act] || ACTIVITY_FIGURES['GUARDIA ORDINARIA'];
+      const badge = document.getElementById('activityVisualBadge');
+      badge.innerHTML = `<i class="fa-solid ${cfg.icon}"></i>`;
+      document.getElementById('activityVisualTitle').textContent = cfg.title;
+      document.getElementById('activityVisualSub').textContent = `${cfg.sub} • ${cond.replaceAll('_', ' ')}`;
+    }
 
     async function callServerApi(payload) {
       const res = await fetch(EXTERNAL_GAS_API_URL, {
@@ -539,7 +570,7 @@
 
       errBox.classList.add('hidden');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando en servidor...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
 
       try {
         const res = await callServerApi({ action: 'LOGIN', cedula, pin });
@@ -557,7 +588,7 @@
           openOwnPinModal();
         }
       } catch (err) {
-        errBox.textContent = 'Error de conexión con el servidor: ' + err.message;
+        errBox.textContent = 'Error de conexión: ' + err.message;
         errBox.classList.remove('hidden');
       } finally {
         btn.disabled = false;
@@ -601,7 +632,30 @@
       currentSession.user.cambioPin = false;
       localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSession));
       closeOwnPinModal();
-      alert('PIN actualizado y cifrado correctamente.');
+      alert('PIN actualizado correctamente.');
+    }
+
+    function applyRolePermissions(rol) {
+      const cleanRole = String(rol || 'DIGITADOR').toUpperCase();
+      const btnCentral = document.getElementById('btnTabCentral');
+      const btnAdmin = document.getElementById('btnTabAdmin');
+      const btnDeactTop = document.getElementById('btnDeactivateEmergencyTop');
+      const nav = document.getElementById('mainNavGrid');
+
+      btnCentral.classList.add('hidden');
+      btnAdmin.classList.add('hidden');
+      btnDeactTop.classList.add('hidden');
+
+      if (cleanRole === 'CENTRAL') {
+        btnCentral.classList.remove('hidden');
+        btnDeactTop.classList.remove('hidden');
+        nav.className = 'grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+      } else if (cleanRole === 'ADMINISTRADOR') {
+        btnAdmin.classList.remove('hidden');
+        nav.className = 'grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+      } else {
+        nav.className = 'grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+      }
     }
 
     function enterApplication() {
@@ -613,29 +667,10 @@
       document.getElementById('headerUserName').textContent = u.nombre;
       document.getElementById('headerUserMeta').textContent = `${u.rango} • ${rol}`;
 
-      const btnCentral = document.getElementById('btnTabCentral');
-      const btnAdmin = document.getElementById('btnTabAdmin');
-      const btnDeactTop = document.getElementById('btnDeactivateEmergencyTop');
-
-      btnCentral.classList.add('hidden');
-      btnAdmin.classList.add('hidden');
-      btnDeactTop.classList.add('hidden');
-
-      let visibleTabs = 2;
-      if (rol === 'CENTRAL') {
-        btnCentral.classList.remove('hidden');
-        btnDeactTop.classList.remove('hidden');
-        visibleTabs = 3;
-      } else if (rol === 'ADMINISTRADOR') {
-        btnAdmin.classList.remove('hidden');
-        visibleTabs = 3;
-      }
-
-      const nav = document.getElementById('mainNavGrid');
-      nav.className = `grid grid-cols-${visibleTabs} gap-1.5 mt-3 pt-2.5 border-t border-white/15`;
-
+      applyRolePermissions(rol);
+      updateActivityFigurePreview();
       switchTab('TAB_TURNO');
-      syncWithServer();
+      syncWithServer(true);
     }
 
     function logoutUser() {
@@ -647,29 +682,40 @@
       document.getElementById('loginPin').value = '';
     }
 
-    async function syncWithServer() {
-      if (!currentSession) return;
+    async function syncWithServer(showSpinner = false) {
+      if (!currentSession || isSyncingNow) return;
+      isSyncingNow = true;
+      const icon = document.getElementById('btnRefreshIcon');
+      if (showSpinner && icon) icon.classList.add('fa-spin');
+
       try {
         const res = await callServerApi({ action: 'SYNC_DATA', token: currentSession.token });
         if (!res.ok) return;
-        appState.geofence = res.geofence;
-        appState.emergency = res.emergency;
+        appState.geofence = res.geofence || { active: true, lat: FIXED_STATION_LAT, lng: FIXED_STATION_LNG, radius: 80, exemptCedulas: [] };
+        appState.emergency = res.emergency || { active: false };
         appState.personal = res.personal || [];
         appState.turnos = res.turnos || [];
 
+        const unitExempt = Array.isArray(appState.geofence.exemptCedulas) &&
+                         appState.geofence.exemptCedulas.includes(String(currentSession.user.cedula).trim());
+
         document.getElementById('admGeoRadius').value = appState.geofence.radius;
         document.getElementById('admGeoActive').checked = appState.geofence.active;
-        document.getElementById('geoBadge').textContent = appState.geofence.active
-          ? `GPS Activo (${appState.geofence.radius}m)`
-          : 'GPS en Prueba';
+        document.getElementById('geoBadge').textContent = unitExempt
+          ? 'Geocerca Desactivada por Admin'
+          : (appState.geofence.active ? `GPS Activo (${appState.geofence.radius}m)` : 'Geocerca Desactivada por Admin');
 
         updateEmergencyUI();
         renderTurnoView();
         renderMyHoursView();
-        if (currentSession.user.rol === 'ADMINISTRADOR') {
+        if (String(currentSession.user.rol).toUpperCase() === 'ADMINISTRADOR') {
+          renderExemptUnitsManager();
           renderAdminConsolidated();
         }
-      } catch (e) {}
+      } catch (e) {} finally {
+        isSyncingNow = false;
+        if (icon) icon.classList.remove('fa-spin');
+      }
     }
 
     function switchTab(tabId) {
@@ -698,16 +744,6 @@
       activeBtn.classList.add('bg-white', 'text-red-800');
     }
 
-    function toggleBypassReasonInput() {
-      const checked = document.getElementById('bypassGeofenceCheck').checked;
-      const input = document.getElementById('bypassGeofenceReason');
-      if (checked) input.classList.remove('hidden');
-      else {
-        input.classList.add('hidden');
-        input.value = '';
-      }
-    }
-
     function formatSecondsHMS(totalSec) {
       const s = Math.max(0, Math.floor(Number(totalSec) || 0));
       const hrs = Math.floor(s / 3600);
@@ -728,7 +764,7 @@
             lng: pos.coords.longitude,
             accuracy: pos.coords.accuracy
           }),
-          err => reject(new Error('Activa la Ubicación Precisa (GPS) en tu teléfono o marca excepción fuera de estación.')),
+          err => reject(new Error('Activa la Ubicación Precisa (GPS) en tu dispositivo.')),
           { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
         );
       });
@@ -736,20 +772,15 @@
 
     async function startNewShift() {
       const btn = document.getElementById('btnStartShift');
-      const bypassGeofence = document.getElementById('bypassGeofenceCheck').checked;
-      const bypassReason = document.getElementById('bypassGeofenceReason').value.trim();
-
-      if (bypassGeofence && !bypassReason) {
-        alert('Escribe el motivo de capacitación o servicio fuera de estación para omitir la geocerca.');
-        return;
-      }
+      const unitExempt = Array.isArray(appState.geofence.exemptCedulas) &&
+                       appState.geofence.exemptCedulas.includes(String(currentSession.user.cedula).trim());
 
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando registro...';
 
       try {
         let gps = { lat: '', lng: '', accuracy: 0 };
-        if (appState.geofence.active && !bypassGeofence) {
+        if (appState.geofence.active && !unitExempt) {
           gps = await getFreshGPS();
         } else if (navigator.geolocation) {
           try { gps = await getFreshGPS(); } catch (e) {}
@@ -764,18 +795,14 @@
           actividad: document.getElementById('shiftActivity').value,
           lat: gps.lat,
           lng: gps.lng,
-          accuracy: gps.accuracy,
-          bypassGeofence,
-          bypassReason
+          accuracy: gps.accuracy
         });
 
         if (!res.ok) {
           alert(res.error);
           return;
         }
-        document.getElementById('bypassGeofenceCheck').checked = false;
-        toggleBypassReasonInput();
-        await syncWithServer();
+        await syncWithServer(true);
       } catch (err) {
         alert(err.message);
       } finally {
@@ -798,7 +825,7 @@
         alert(res.error);
         return;
       }
-      await syncWithServer();
+      await syncWithServer(true);
     }
 
     function renderTurnoView() {
@@ -821,17 +848,25 @@
         return;
       }
 
-      listEl.innerHTML = activeShifts.map(t => `
-        <div class="flex items-center justify-between p-3 rounded-2xl border ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}">
-          <div>
-            <div class="font-black text-slate-900">${t.nombre}</div>
-            <div class="text-[11px] text-slate-600">${t.rango} • ${t.actividad}${t.observacionAdmin ? ' • ' + t.observacionAdmin : ''}</div>
+      listEl.innerHTML = activeShifts.map(t => {
+        const cfg = ACTIVITY_FIGURES[t.actividad] || { icon: 'fa-shield-heart' };
+        return `
+          <div class="flex items-center justify-between p-3 rounded-2xl border ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-red-100 text-red-700 flex items-center justify-center text-sm shrink-0">
+                <i class="fa-solid ${cfg.icon}"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-900">${t.nombre}</div>
+                <div class="text-[11px] text-slate-600">${t.rango} • ${t.actividad}${t.observacionAdmin ? ' • ' + t.observacionAdmin : ''}</div>
+              </div>
+            </div>
+            <span class="text-[10px] font-black px-2.5 py-1 rounded-full ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}">
+              ${t.condicion}
+            </span>
           </div>
-          <span class="text-[10px] font-black px-2.5 py-1 rounded-full ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}">
-            ${t.condicion}
-          </span>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderMyHoursView() {
@@ -860,7 +895,49 @@
       `).join('');
     }
 
-    // CONSOLIDADO ADMIN
+    function renderExemptUnitsManager() {
+      if (!Array.isArray(exemptUnitsDraft) || (exemptUnitsDraft.length === 0 && appState.geofence.exemptCedulas?.length)) {
+        exemptUnitsDraft = [...(appState.geofence.exemptCedulas || [])];
+      }
+      const sel = document.getElementById('admExemptUnitSelect');
+      sel.innerHTML = appState.personal.map(p =>
+        `<option value="${p.cedula}">${p.nombre} (${p.cedula})</option>`
+      ).join('');
+
+      const chipsEl = document.getElementById('exemptUnitsChips');
+      if (exemptUnitsDraft.length === 0) {
+        chipsEl.innerHTML = '<span class="text-[11px] text-slate-500">Todas las unidades sujetas a la regla general de geocerca.</span>';
+        return;
+      }
+
+      chipsEl.innerHTML = exemptUnitsDraft.map(ced => {
+        const person = appState.personal.find(p => p.cedula === ced);
+        const label = person ? `${person.nombre} (${ced})` : ced;
+        return `
+          <span class="inline-flex items-center gap-1.5 bg-amber-100 border border-amber-300 text-amber-950 text-[11px] font-extrabold px-2.5 py-1 rounded-full">
+            <span>Sin GPS: ${label}</span>
+            <button type="button" onclick="removeExemptUnit('${ced}')" class="text-red-700 hover:text-red-900 font-black">×</button>
+          </span>
+        `;
+      }).join('');
+    }
+
+    function toggleUnitGeofenceExemption() {
+      const ced = document.getElementById('admExemptUnitSelect').value;
+      if (!ced) return;
+      if (exemptUnitsDraft.includes(ced)) {
+        exemptUnitsDraft = exemptUnitsDraft.filter(x => x !== ced);
+      } else {
+        exemptUnitsDraft.push(ced);
+      }
+      renderExemptUnitsManager();
+    }
+
+    function removeExemptUnit(ced) {
+      exemptUnitsDraft = exemptUnitsDraft.filter(x => x !== ced);
+      renderExemptUnitsManager();
+    }
+
     function handleUnitSearchInput(query) {
       const box = document.getElementById('unitSuggestionsBox');
       const clearBtn = document.getElementById('btnClearUnitSearch');
@@ -1092,7 +1169,7 @@
         return;
       }
       closeEditShiftModal();
-      await syncWithServer();
+      await syncWithServer(true);
     }
 
     async function adminDeleteShift(id) {
@@ -1108,7 +1185,7 @@
         alert(res.error);
         return;
       }
-      await syncWithServer();
+      await syncWithServer(true);
     }
 
     async function adminSaveUser() {
@@ -1137,27 +1214,32 @@
       document.getElementById('admUserPin').value = '';
       document.getElementById('admUserName').value = '';
       document.getElementById('admUserRank').value = '';
-      await syncWithServer();
+      await syncWithServer(true);
     }
 
     async function adminSaveGeofence() {
+      if (String(currentSession?.user?.rol || '').toUpperCase() !== 'ADMINISTRADOR') {
+        alert('Solo el ADMINISTRADOR puede activar o desactivar la geocerca.');
+        return;
+      }
       const radius = Number(document.getElementById('admGeoRadius').value) || 80;
       const active = document.getElementById('admGeoActive').checked;
 
       const res = await callServerApi({
         action: 'ADMIN_UPDATE_GEOFENCE',
         token: currentSession.token,
-        radius, active
+        radius,
+        active,
+        exemptCedulas: exemptUnitsDraft
       });
       if (!res.ok) {
         alert(res.error);
         return;
       }
-      alert('Geocerca actualizada en el servidor.');
-      await syncWithServer();
+      alert('Regla GPS y excepciones por unidad guardadas en el servidor.');
+      await syncWithServer(true);
     }
 
-    // CENTRAL DE EMERGENCIA Y SIRENA
     async function triggerEmergencyState(active) {
       if (String(currentSession?.user?.rol || '').toUpperCase() !== 'CENTRAL') {
         alert('Solo el perfil CENTRAL DE EMERGENCIA puede operar la alarma.');
@@ -1179,7 +1261,7 @@
         return;
       }
       sirenMutedLocally = false;
-      await syncWithServer();
+      await syncWithServer(true);
     }
 
     function updateEmergencyUI() {
@@ -1266,10 +1348,11 @@
     }, 1000);
 
     setInterval(() => {
-      if (currentSession) syncWithServer();
-    }, 5000);
+      if (currentSession && !document.hidden) syncWithServer(false);
+    }, 20000);
 
     window.onload = function () {
+      updateActivityFigurePreview();
       const saved = localStorage.getItem(STORAGE_KEY_SESSION);
       if (saved) {
         try {
