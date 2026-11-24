@@ -22,14 +22,14 @@
       0%, 100% { background-color: #991b1b; }
       50% { background-color: #dc2626; }
     }
-    .siren-active-banner { animation: sirenFlash 0.9s infinite; }
+    .siren-active-banner { animation: sirenFlash 0.85s infinite; }
   </style>
 </head>
 <body class="min-h-screen text-slate-900 pb-12">
 
   <!-- BANNER DE EMERGENCIA ACTIVA -->
   <div id="emergencyBanner" class="hidden siren-active-banner text-white px-4 py-3 shadow-xl border-b-4 border-amber-400 sticky top-0 z-50">
-    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-bell text-2xl text-amber-300 animate-bounce"></i>
         <div>
@@ -37,11 +37,14 @@
           <div id="emergencyBannerText" class="text-sm font-extrabold">INCENDIO / EMERGENCIA EN CURSO</div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="stopLocalSirenSound()" class="bg-slate-950/70 hover:bg-slate-950 text-white text-xs font-extrabold px-3 py-2 rounded-xl border border-white/20">
-          <i class="fa-solid fa-volume-xmark mr-1"></i> Silenciar en mi móvil
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="unlockAndPlaySiren()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl">
+          <i class="fa-solid fa-volume-high mr-1"></i> Sonar Sirena Aquí
         </button>
-        <button id="btnDeactivateEmergencyTop" onclick="triggerEmergencyState(false)" class="hidden bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl">
+        <button onclick="stopLocalSirenSound()" class="bg-slate-950/75 hover:bg-slate-950 text-white text-xs font-extrabold px-3 py-2 rounded-xl border border-white/20">
+          <i class="fa-solid fa-volume-xmark mr-1"></i> Silenciar
+        </button>
+        <button id="btnDeactivateEmergencyTop" onclick="triggerEmergencyState(false)" class="hidden bg-white hover:bg-slate-100 text-red-900 text-xs font-black px-3 py-2 rounded-xl">
           Desactivar Alarma
         </button>
       </div>
@@ -70,7 +73,7 @@
 
         <div>
           <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Número de Cédula</label>
-          <input type="text" id="loginCedula" inputmode="numeric" required placeholder="Ej: 1113654321"
+          <input type="text" id="loginCedula" inputmode="numeric" required placeholder="Ej: 16866494"
             class="w-full border-2 border-slate-300 focus:border-red-700 rounded-xl px-4 py-3 text-sm font-bold outline-none">
         </div>
 
@@ -91,24 +94,29 @@
     </div>
   </div>
 
-  <!-- MODAL OBLIGATORIO CAMBIO DE PIN -->
+  <!-- MODAL CAMBIO DE PIN CON BOTÓN CANCELAR / ATRÁS -->
   <div id="forcePinModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-amber-400 shadow-2xl space-y-4">
       <div class="text-center">
         <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl mb-2">
           <i class="fa-solid fa-key"></i>
         </div>
-        <h3 class="text-lg font-black uppercase text-slate-900">Actualiza tu PIN Personal</h3>
-        <p class="text-xs text-slate-600 mt-1">Por seguridad debes definir un PIN privado nuevo (4 a 6 dígitos).</p>
+        <h3 class="text-lg font-black uppercase text-slate-900">Cambiar PIN Personal</h3>
+        <p class="text-xs text-slate-600 mt-1">Define un PIN privado de 4 a 6 dígitos o presiona Cancelar para volver.</p>
       </div>
       <input type="password" id="newPersonalPin" inputmode="numeric" maxlength="6" placeholder="Nuevo PIN (4-6 dígitos)"
         class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-center font-black tracking-widest text-base">
       <input type="password" id="confirmPersonalPin" inputmode="numeric" maxlength="6" placeholder="Confirma tu nuevo PIN"
         class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-center font-black tracking-widest text-base">
       <div id="pinChangeMsg" class="hidden text-xs font-bold text-red-700 text-center"></div>
-      <button onclick="submitNewOwnPin()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-3 rounded-xl uppercase text-xs">
-        Guardar PIN Cifrado
-      </button>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeOwnPinModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-black py-3 rounded-xl uppercase text-xs">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Cancelar
+        </button>
+        <button type="button" onclick="submitNewOwnPin()" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-black py-3 rounded-xl uppercase text-xs">
+          Guardar PIN
+        </button>
+      </div>
     </div>
   </div>
 
@@ -135,15 +143,15 @@
           </div>
         </div>
 
-        <!-- NAVEGACIÓN -->
-        <nav class="grid grid-cols-4 gap-1.5 mt-3 pt-2.5 border-t border-white/15">
+        <!-- NAVEGACIÓN DINÁMICA SEGÚN ROL -->
+        <nav id="mainNavGrid" class="grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15">
           <button onclick="switchTab('TAB_TURNO')" id="btnTabTurno" class="py-2 px-2 rounded-xl text-xs font-black bg-white text-red-800">
             <i class="fa-solid fa-clock mr-1"></i>Turno
           </button>
           <button onclick="switchTab('TAB_MIS_HORAS')" id="btnTabMisHoras" class="py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
             <i class="fa-solid fa-list-check mr-1"></i>Mis Horas
           </button>
-          <button onclick="switchTab('TAB_CENTRAL')" id="btnTabCentral" class="py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
+          <button onclick="switchTab('TAB_CENTRAL')" id="btnTabCentral" class="hidden py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
             <i class="fa-solid fa-tower-broadcast mr-1"></i>Central
           </button>
           <button onclick="switchTab('TAB_ADMIN')" id="btnTabAdmin" class="hidden py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
@@ -157,8 +165,31 @@
 
       <!-- PESTAÑA 1: TURNO -->
       <section id="TAB_TURNO" class="space-y-4">
+        <!-- IMÁGENES DE REFERENCIA DE CONTROL DE GUARDIA -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center gap-3">
+            <img src="./icon-192.png" onerror="this.style.display='none'" alt="Estación Santa Elena"
+              class="w-16 h-16 rounded-2xl object-cover bg-red-50 p-1 border-2 border-red-700 shrink-0">
+            <div>
+              <div class="text-[10px] font-black uppercase text-red-700">Referencia de Estación</div>
+              <div class="text-xs font-black text-slate-900">C.B.V. Santa Elena • Calle 4 6A-4</div>
+              <div class="text-[11px] text-slate-600 mt-0.5">Geocerca: 3.65855, -76.24802 • Dignidad y Civismo</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-red-800 text-2xl shrink-0">
+              <i class="fa-solid fa-truck-medical"></i>
+            </div>
+            <div>
+              <div class="text-[10px] font-black uppercase text-amber-800">Protocolo Operativo</div>
+              <div class="text-xs font-black text-slate-900">Registro de Guardia y Servicios</div>
+              <div class="text-[11px] text-slate-600 mt-0.5">Verifica GPS en estación o indica servicio/capacitación fuera.</div>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div>
               <h2 class="text-base font-black uppercase text-slate-900">Control de Guardia</h2>
               <p class="text-xs text-slate-500">Estación Santa Elena (3.65855, -76.24802)</p>
@@ -195,9 +226,19 @@
                   <option value="ATENCION DE EMERGENCIA">ATENCIÓN DE EMERGENCIA</option>
                   <option value="CAPACITACION / ENTRENAMIENTO">CAPACITACIÓN / ENTRENAMIENTO</option>
                   <option value="MANTENIMIENTO MAQUINAS Y EQUIPO">MANTENIMIENTO MÁQUINAS Y EQUIPO</option>
-                  <option value="APOYO ADMINISTRATIVO">APOYO ADMINISTRATIVO</option>
+                  <option value="SERVICIO FUERA DE ESTACION">SERVICIO FUERA DE ESTACIÓN</option>
                 </select>
               </div>
+            </div>
+
+            <!-- EXCEPCIÓN DE GEOCERCA PARA CAPACITACIÓN O SERVICIO FUERA DE ESTACIÓN -->
+            <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3 space-y-2">
+              <label class="flex items-center gap-2 text-xs font-extrabold text-amber-950 cursor-pointer">
+                <input type="checkbox" id="bypassGeofenceCheck" onchange="toggleBypassReasonInput()" class="w-4 h-4 accent-red-700">
+                <span>Omitir geocerca por capacitación o servicio autorizado fuera de estación</span>
+              </label>
+              <input type="text" id="bypassGeofenceReason" placeholder="Indica el lugar o actividad (Ej: Capacitación en Palmira / Apoyo vial)"
+                class="hidden w-full bg-white border-2 border-amber-300 rounded-xl px-3 py-2 text-xs font-bold">
             </div>
 
             <button onclick="startNewShift()" id="btnStartShift"
@@ -242,14 +283,14 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA -->
+      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA (SOLO ROL CENTRAL) -->
       <section id="TAB_CENTRAL" class="hidden space-y-4">
         <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-4">
           <h2 class="text-base font-black uppercase text-slate-900">
-            <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Despacho y Alerta Sonora
+            <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Central de Emergencia — Despacho y Alarma
           </h2>
           <p class="text-xs text-slate-600">
-            Activa la sirena de emergencia en las unidades conectadas y genera el despacho rápido para el grupo de WhatsApp.
+            Módulo exclusivo de Central de Emergencia. Activa la sirena de emergencia y envía el aviso rápido al grupo de WhatsApp.
           </p>
 
           <div class="grid sm:grid-cols-2 gap-3">
@@ -283,10 +324,9 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 4: ADMINISTRACIÓN (CONSOLIDADO RENOVADO + PERSONAL + GEOCERCA) -->
+      <!-- PESTAÑA 4: ADMINISTRACIÓN (SOLO ROL ADMINISTRADOR) -->
       <section id="TAB_ADMIN" class="hidden space-y-5">
 
-        <!-- SUB-SECCIÓN: CONSOLIDADO DE HORAS CON BUSCADOR Y FECHAS -->
         <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -299,10 +339,8 @@
             </button>
           </div>
 
-          <!-- BARRA DE BÚSQUEDA DE UNIDAD BOMBERIL Y FILTRO DE FECHAS -->
           <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
             <div class="grid md:grid-cols-12 gap-3 items-end">
-              <!-- Buscador Predictivo Nombre / Cédula -->
               <div class="md:col-span-6 relative">
                 <label class="block text-[11px] font-black uppercase text-slate-700 mb-1">
                   <i class="fa-solid fa-magnifying-glass text-red-700 mr-1"></i> Buscar Unidad (Nombre o Cédula)
@@ -318,18 +356,15 @@
                     <i class="fa-solid fa-circle-xmark"></i>
                   </button>
                 </div>
-                <!-- Lista de sugerencias -->
                 <div id="unitSuggestionsBox" class="hidden absolute left-0 right-0 mt-1 bg-white border-2 border-slate-300 rounded-xl shadow-xl max-h-52 overflow-y-auto z-30 divide-y divide-slate-100"></div>
               </div>
 
-              <!-- Fecha Desde -->
               <div class="md:col-span-3">
                 <label class="block text-[11px] font-black uppercase text-slate-700 mb-1">Fecha Desde</label>
                 <input type="date" id="filterDateFrom" onchange="renderAdminConsolidated()"
                   class="w-full bg-white border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
               </div>
 
-              <!-- Fecha Hasta -->
               <div class="md:col-span-3">
                 <label class="block text-[11px] font-black uppercase text-slate-700 mb-1">Fecha Hasta</label>
                 <input type="date" id="filterDateTo" onchange="renderAdminConsolidated()"
@@ -337,7 +372,6 @@
               </div>
             </div>
 
-            <!-- Botones rápidos de rango de fecha -->
             <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
               <div class="flex flex-wrap gap-1.5">
                 <button type="button" onclick="setQuickDateFilter('TODAY')" class="bg-white hover:bg-slate-200 border border-slate-300 text-slate-800 text-[11px] font-extrabold px-2.5 py-1 rounded-lg">Hoy</button>
@@ -351,7 +385,6 @@
             </div>
           </div>
 
-          <!-- TARJETA DE CONSOLIDADO INDIVIDUAL (SOLO VISIBLE AL SELECCIONAR UNA UNIDAD) -->
           <div id="individualUnitSummaryCard" class="hidden bg-gradient-to-r from-red-900 via-red-800 to-slate-900 text-white rounded-2xl p-4 border-2 border-amber-400 shadow-lg">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -359,7 +392,7 @@
                   Consolidado Individual de Unidad
                 </span>
                 <h3 id="summaryUnitName" class="text-base font-black uppercase mt-1">NOMBRE DE LA UNIDAD</h3>
-                <p id="summaryUnitMeta" class="text-xs text-amber-200">Cédula • Rango • Rango de fechas aplicado</p>
+                <p id="summaryUnitMeta" class="text-xs text-amber-200">Cédula • Rango • Periodo</p>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="bg-black/35 rounded-xl px-3 py-2 border border-white/15">
@@ -378,7 +411,6 @@
             </div>
           </div>
 
-          <!-- TABLA DE REGISTROS -->
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-100 text-slate-700 uppercase font-black">
@@ -395,7 +427,6 @@
           </div>
         </div>
 
-        <!-- SUB-SECCIÓN: GESTIÓN DE PERSONAL Y GEOCERCA -->
         <div class="grid md:grid-cols-2 gap-4">
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
             <h3 class="text-sm font-black uppercase text-slate-900">
@@ -467,16 +498,12 @@
   </div>
 
   <script>
-    // =========================================================================
-    // REEMPLAZA ESTA URL POR LA DE TU NUEVA IMPLEMENTACIÓN DE GOOGLE APPS SCRIPT
-    // =========================================================================
     const EXTERNAL_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec';
-
     const FIXED_STATION_LAT = 3.65855;
     const FIXED_STATION_LNG = -76.24802;
     const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v8';
 
-    let currentSession = null; // { token, user }
+    let currentSession = null;
     let appState = {
       geofence: { active: true, lat: FIXED_STATION_LAT, lng: FIXED_STATION_LNG, radius: 80 },
       emergency: { active: false },
@@ -484,7 +511,7 @@
       turnos: []
     };
 
-    let selectedUnitCedula = ''; // '' = Todas las unidades (sin acumulado global)
+    let selectedUnitCedula = '';
     let sirenAudioCtx = null;
     let sirenInterval = null;
     let sirenMutedLocally = false;
@@ -527,7 +554,7 @@
         enterApplication();
 
         if (res.user.cambioPin) {
-          document.getElementById('forcePinModal').classList.remove('hidden');
+          openOwnPinModal();
         }
       } catch (err) {
         errBox.textContent = 'Error de conexión con el servidor: ' + err.message;
@@ -543,6 +570,10 @@
       document.getElementById('confirmPersonalPin').value = '';
       document.getElementById('pinChangeMsg').classList.add('hidden');
       document.getElementById('forcePinModal').classList.remove('hidden');
+    }
+
+    function closeOwnPinModal() {
+      document.getElementById('forcePinModal').classList.add('hidden');
     }
 
     async function submitNewOwnPin() {
@@ -569,7 +600,7 @@
       }
       currentSession.user.cambioPin = false;
       localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSession));
-      document.getElementById('forcePinModal').classList.add('hidden');
+      closeOwnPinModal();
       alert('PIN actualizado y cifrado correctamente.');
     }
 
@@ -578,16 +609,32 @@
       document.getElementById('appShell').classList.remove('hidden');
 
       const u = currentSession.user;
+      const rol = String(u.rol || 'DIGITADOR').toUpperCase();
       document.getElementById('headerUserName').textContent = u.nombre;
-      document.getElementById('headerUserMeta').textContent = `${u.rango} • ${u.rol}`;
+      document.getElementById('headerUserMeta').textContent = `${u.rango} • ${rol}`;
 
-      if (u.rol === 'ADMINISTRADOR') {
-        document.getElementById('btnTabAdmin').classList.remove('hidden');
-        document.getElementById('btnDeactivateEmergencyTop').classList.remove('hidden');
-      } else {
-        document.getElementById('btnTabAdmin').classList.add('hidden');
+      const btnCentral = document.getElementById('btnTabCentral');
+      const btnAdmin = document.getElementById('btnTabAdmin');
+      const btnDeactTop = document.getElementById('btnDeactivateEmergencyTop');
+
+      btnCentral.classList.add('hidden');
+      btnAdmin.classList.add('hidden');
+      btnDeactTop.classList.add('hidden');
+
+      let visibleTabs = 2;
+      if (rol === 'CENTRAL') {
+        btnCentral.classList.remove('hidden');
+        btnDeactTop.classList.remove('hidden');
+        visibleTabs = 3;
+      } else if (rol === 'ADMINISTRADOR') {
+        btnAdmin.classList.remove('hidden');
+        visibleTabs = 3;
       }
 
+      const nav = document.getElementById('mainNavGrid');
+      nav.className = `grid grid-cols-${visibleTabs} gap-1.5 mt-3 pt-2.5 border-t border-white/15`;
+
+      switchTab('TAB_TURNO');
       syncWithServer();
     }
 
@@ -626,6 +673,10 @@
     }
 
     function switchTab(tabId) {
+      const rol = String(currentSession?.user?.rol || 'DIGITADOR').toUpperCase();
+      if (tabId === 'TAB_CENTRAL' && rol !== 'CENTRAL') tabId = 'TAB_TURNO';
+      if (tabId === 'TAB_ADMIN' && rol !== 'ADMINISTRADOR') tabId = 'TAB_TURNO';
+
       ['TAB_TURNO', 'TAB_MIS_HORAS', 'TAB_CENTRAL', 'TAB_ADMIN'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
@@ -645,6 +696,16 @@
       const activeBtn = document.getElementById(map[tabId]);
       activeBtn.classList.remove('bg-red-950/50', 'text-white');
       activeBtn.classList.add('bg-white', 'text-red-800');
+    }
+
+    function toggleBypassReasonInput() {
+      const checked = document.getElementById('bypassGeofenceCheck').checked;
+      const input = document.getElementById('bypassGeofenceReason');
+      if (checked) input.classList.remove('hidden');
+      else {
+        input.classList.add('hidden');
+        input.value = '';
+      }
     }
 
     function formatSecondsHMS(totalSec) {
@@ -667,7 +728,7 @@
             lng: pos.coords.longitude,
             accuracy: pos.coords.accuracy
           }),
-          err => reject(new Error('Activa la Ubicación Precisa (GPS) en tu teléfono.')),
+          err => reject(new Error('Activa la Ubicación Precisa (GPS) en tu teléfono o marca excepción fuera de estación.')),
           { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
         );
       });
@@ -675,14 +736,25 @@
 
     async function startNewShift() {
       const btn = document.getElementById('btnStartShift');
+      const bypassGeofence = document.getElementById('bypassGeofenceCheck').checked;
+      const bypassReason = document.getElementById('bypassGeofenceReason').value.trim();
+
+      if (bypassGeofence && !bypassReason) {
+        alert('Escribe el motivo de capacitación o servicio fuera de estación para omitir la geocerca.');
+        return;
+      }
+
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando GPS en servidor...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando registro...';
 
       try {
-        let gps = { lat: 0, lng: 0, accuracy: 0 };
-        if (appState.geofence.active) {
+        let gps = { lat: '', lng: '', accuracy: 0 };
+        if (appState.geofence.active && !bypassGeofence) {
           gps = await getFreshGPS();
+        } else if (navigator.geolocation) {
+          try { gps = await getFreshGPS(); } catch (e) {}
         }
+
         const res = await callServerApi({
           action: 'START_SHIFT',
           token: currentSession.token,
@@ -692,13 +764,17 @@
           actividad: document.getElementById('shiftActivity').value,
           lat: gps.lat,
           lng: gps.lng,
-          accuracy: gps.accuracy
+          accuracy: gps.accuracy,
+          bypassGeofence,
+          bypassReason
         });
 
         if (!res.ok) {
           alert(res.error);
           return;
         }
+        document.getElementById('bypassGeofenceCheck').checked = false;
+        toggleBypassReasonInput();
         await syncWithServer();
       } catch (err) {
         alert(err.message);
@@ -749,7 +825,7 @@
         <div class="flex items-center justify-between p-3 rounded-2xl border ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}">
           <div>
             <div class="font-black text-slate-900">${t.nombre}</div>
-            <div class="text-[11px] text-slate-600">${t.rango} • ${t.actividad}</div>
+            <div class="text-[11px] text-slate-600">${t.rango} • ${t.actividad}${t.observacionAdmin ? ' • ' + t.observacionAdmin : ''}</div>
           </div>
           <span class="text-[10px] font-black px-2.5 py-1 rounded-full ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}">
             ${t.condicion}
@@ -784,35 +860,24 @@
       `).join('');
     }
 
-    // =========================================================================
-    // NUEVO CONSOLIDADO ADMIN: BUSCADOR POR NOMBRE/CÉDULA + RANGO DE FECHAS
-    // =========================================================================
+    // CONSOLIDADO ADMIN
     function handleUnitSearchInput(query) {
       const box = document.getElementById('unitSuggestionsBox');
       const clearBtn = document.getElementById('btnClearUnitSearch');
       const q = String(query || '').trim().toLowerCase();
 
-      if (q.length > 0 || selectedUnitCedula) {
-        clearBtn.classList.remove('hidden');
-      } else {
-        clearBtn.classList.add('hidden');
-      }
+      if (q.length > 0 || selectedUnitCedula) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
 
-      // Si el usuario borró el texto manualmente, limpiar selección
       if (q === '') {
         selectedUnitCedula = '';
         renderAdminConsolidated();
       }
 
-      // Reunir catálogo único de personal (hoja PERSONAL + registros históricos)
       const mapUnits = new Map();
-      appState.personal.forEach(p => {
-        mapUnits.set(p.cedula, { cedula: p.cedula, nombre: p.nombre, rango: p.rango });
-      });
+      appState.personal.forEach(p => mapUnits.set(p.cedula, { cedula: p.cedula, nombre: p.nombre, rango: p.rango }));
       appState.turnos.forEach(t => {
-        if (!mapUnits.has(t.cedula)) {
-          mapUnits.set(t.cedula, { cedula: t.cedula, nombre: t.nombre, rango: t.rango });
-        }
+        if (!mapUnits.has(t.cedula)) mapUnits.set(t.cedula, { cedula: t.cedula, nombre: t.nombre, rango: t.rango });
       });
 
       const matches = Array.from(mapUnits.values()).filter(u =>
@@ -840,9 +905,7 @@
       selectedUnitCedula = cedula;
       const person = appState.personal.find(p => p.cedula === cedula) ||
                      appState.turnos.find(t => t.cedula === cedula);
-      if (person) {
-        document.getElementById('unitSearchInput').value = `${person.nombre} (${person.cedula})`;
-      }
+      if (person) document.getElementById('unitSearchInput').value = `${person.nombre} (${person.cedula})`;
       document.getElementById('unitSuggestionsBox').classList.add('hidden');
       document.getElementById('btnClearUnitSearch').classList.remove('hidden');
       renderAdminConsolidated();
@@ -890,8 +953,7 @@
         .filter(t => t.estado === 'FINALIZADO')
         .filter(t => {
           if (selectedUnitCedula && t.cedula !== selectedUnitCedula) return false;
-          const shiftDate = new Date(t.inicio);
-          const localYMD = shiftDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+          const localYMD = new Date(t.inicio).toLocaleDateString('en-CA');
           if (fromStr && localYMD < fromStr) return false;
           if (toStr && localYMD > toStr) return false;
           return true;
@@ -904,7 +966,6 @@
       const summaryCard = document.getElementById('individualUnitSummaryCard');
       const filterLabel = document.getElementById('activeFilterLabel');
 
-      // SOLO mostrar el consolidado acumulado cuando hay una unidad bomberil seleccionada
       if (selectedUnitCedula) {
         const person = appState.personal.find(p => p.cedula === selectedUnitCedula) ||
                        filtered[0] || { nombre: 'UNIDAD', rango: '', cedula: selectedUnitCedula };
@@ -925,7 +986,6 @@
         summaryCard.classList.remove('hidden');
         filterLabel.textContent = `Mostrando ${filtered.length} turno(s) de ${person.nombre}`;
       } else {
-        // Sin unidad seleccionada: ocultamos cualquier suma global acumulada
         summaryCard.classList.add('hidden');
         filterLabel.textContent = `Mostrando ${filtered.length} registro(s) generales. Selecciona una unidad para ver su consolidado de horas.`;
       }
@@ -989,7 +1049,6 @@
       XLSX.writeFile(wb, `Horas_CBV_Santa_Elena${suffix}.xlsx`);
     }
 
-    // Cerrar sugerencias al hacer clic fuera
     document.addEventListener('click', function (e) {
       const box = document.getElementById('unitSuggestionsBox');
       const input = document.getElementById('unitSearchInput');
@@ -998,9 +1057,6 @@
       }
     });
 
-    // =========================================================================
-    // EDICIÓN Y ADMINISTRACIÓN
-    // =========================================================================
     function openEditShiftModal(id) {
       const t = appState.turnos.find(x => x.id === id);
       if (!t) return;
@@ -1101,10 +1157,12 @@
       await syncWithServer();
     }
 
-    // =========================================================================
     // CENTRAL DE EMERGENCIA Y SIRENA
-    // =========================================================================
     async function triggerEmergencyState(active) {
+      if (String(currentSession?.user?.rol || '').toUpperCase() !== 'CENTRAL') {
+        alert('Solo el perfil CENTRAL DE EMERGENCIA puede operar la alarma.');
+        return;
+      }
       const type = document.getElementById('emergType').value;
       const location = document.getElementById('emergLocation').value.trim() || 'Jurisdicción Santa Elena';
 
@@ -1137,24 +1195,44 @@
       }
     }
 
+    function unlockAndPlaySiren() {
+      sirenMutedLocally = false;
+      try {
+        if (!sirenAudioCtx) {
+          sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+          sirenAudioCtx.resume();
+        }
+      } catch (e) {}
+      stopLocalSirenSound();
+      sirenMutedLocally = false;
+      startLocalSirenSound();
+    }
+
     function startLocalSirenSound() {
       if (sirenInterval) return;
       try {
-        sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!sirenAudioCtx) {
+          sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+          sirenAudioCtx.resume();
+        }
         let high = false;
         sirenInterval = setInterval(() => {
-          if (!sirenAudioCtx) return;
+          if (!sirenAudioCtx || sirenAudioCtx.state === 'suspended') return;
           const osc = sirenAudioCtx.createOscillator();
           const gain = sirenAudioCtx.createGain();
           osc.type = 'sawtooth';
-          osc.frequency.value = high ? 880 : 620;
-          gain.gain.value = 0.15;
+          osc.frequency.value = high ? 960 : 620;
+          gain.gain.value = 0.25;
           osc.connect(gain);
           gain.connect(sirenAudioCtx.destination);
           osc.start();
-          osc.stop(sirenAudioCtx.currentTime + 0.35);
+          osc.stop(sirenAudioCtx.currentTime + 0.36);
           high = !high;
-        }, 450);
+        }, 420);
       } catch (e) {}
     }
 
@@ -1178,7 +1256,6 @@
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // Reloj en vivo para turno activo y sincronización periódica
     setInterval(() => {
       if (!currentSession) return;
       const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
@@ -1190,7 +1267,7 @@
 
     setInterval(() => {
       if (currentSession) syncWithServer();
-    }, 6000);
+    }, 5000);
 
     window.onload = function () {
       const saved = localStorage.getItem(STORAGE_KEY_SESSION);
