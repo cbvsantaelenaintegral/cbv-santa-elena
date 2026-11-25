@@ -133,29 +133,26 @@
               <div id="headerUserMeta" class="text-[11px] text-amber-100">Rango • Rol</div>
             </div>
           </div>
-          <div class="flex items-center gap-2">
+          <div id="headerActionButtons" class="flex items-center gap-2">
             <button onclick="syncWithServer(true)" title="Sincronizar datos" class="bg-white/15 hover:bg-white/25 text-white font-bold px-2.5 py-2 rounded-xl text-xs">
               <i id="btnRefreshIcon" class="fa-solid fa-rotate"></i>
             </button>
-            <button onclick="openOwnPinModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-2.5 py-2 rounded-xl text-xs">
+            <button id="btnHeaderPin" onclick="openOwnPinModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-2.5 py-2 rounded-xl text-xs">
               <i class="fa-solid fa-key"></i> Mi PIN
             </button>
-            <button onclick="logoutUser()" class="bg-black/30 hover:bg-black/50 text-white font-bold px-2.5 py-2 rounded-xl text-xs">
+            <button id="btnHeaderLogout" onclick="logoutUser()" class="bg-black/30 hover:bg-black/50 text-white font-bold px-2.5 py-2 rounded-xl text-xs">
               <i class="fa-solid fa-right-from-bracket text-amber-300"></i> Salir
             </button>
           </div>
         </div>
 
-        <!-- NAVEGACIÓN ESTRICTA POR ROL (CENTRAL SOLO PARA 'CENTRAL') -->
+        <!-- NAVEGACIÓN (SE OCULTA EN PERFIL CENTRAL DEDICADO) -->
         <nav id="mainNavGrid" class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15">
           <button onclick="switchTab('TAB_TURNO')" id="btnTabTurno" class="py-2 px-2 rounded-xl text-xs font-black bg-white text-red-800">
             <i class="fa-solid fa-clock mr-1"></i>Turno
           </button>
           <button onclick="switchTab('TAB_MIS_HORAS')" id="btnTabMisHoras" class="py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
             <i class="fa-solid fa-list-check mr-1"></i>Mis Horas
-          </button>
-          <button onclick="switchTab('TAB_CENTRAL')" id="btnTabCentral" class="hidden py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
-            <i class="fa-solid fa-tower-broadcast mr-1"></i>Central
           </button>
           <button onclick="switchTab('TAB_ADMIN')" id="btnTabAdmin" class="hidden py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
             <i class="fa-solid fa-shield-halved mr-1"></i>Admin
@@ -166,35 +163,13 @@
 
     <main class="max-w-5xl mx-auto px-4 mt-5 space-y-5">
 
-      <!-- PESTAÑA 1: TURNO -->
+      <!-- PESTAÑA 1: TURNO (LIMPIA Y DIRECTA) -->
       <section id="TAB_TURNO" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center gap-3">
-            <img src="./icon-192.png" onerror="this.style.display='none'" alt="Estación Santa Elena"
-              class="w-16 h-16 rounded-2xl object-cover bg-red-50 p-1 border-2 border-red-700 shrink-0">
-            <div>
-              <div class="text-[10px] font-black uppercase text-red-700">Estación Santa Elena</div>
-              <div class="text-xs font-black text-slate-900">Calle 4 6A-4 • Valle del Cauca</div>
-              <div class="text-[11px] text-slate-600 mt-0.5">Geocerca: 3.65855, -76.24802</div>
-            </div>
-          </div>
-          <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center gap-3">
-            <div id="activityVisualBadge" class="w-16 h-16 rounded-2xl bg-red-50 border-2 border-red-700 flex items-center justify-center text-red-700 text-2xl shrink-0">
-              <i class="fa-solid fa-shield-heart"></i>
-            </div>
-            <div>
-              <div class="text-[10px] font-black uppercase text-red-700">Figura de Actividad Seleccionada</div>
-              <div id="activityVisualTitle" class="text-xs font-black text-slate-900">GUARDIA ORDINARIA</div>
-              <div id="activityVisualSub" class="text-[11px] text-slate-600 mt-0.5">Vigilancia y disponibilidad en estación</div>
-            </div>
-          </div>
-        </div>
-
         <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-4">
           <div class="flex items-center justify-between gap-2">
             <div>
               <h2 class="text-base font-black uppercase text-slate-900">Control de Guardia</h2>
-              <p class="text-xs text-slate-500">Disponibilidad, actividad con figura y validación de geocerca</p>
+              <p class="text-xs text-slate-500">Estación Santa Elena • Calle 4 6A-4</p>
             </div>
             <span id="geoBadge" class="text-[11px] font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
               GPS Verificado
@@ -218,7 +193,7 @@
                 <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
                   <i class="fa-solid fa-user-check text-red-700 mr-1"></i> Disponibilidad / Condición
                 </label>
-                <select id="shiftCondition" onchange="updateActivityFigurePreview()" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                <select id="shiftCondition" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
                   <option value="DISPONIBLE">🟢 DISPONIBLE EN ESTACIÓN</option>
                   <option value="COMANDANTE DE GUARDIA">🟡 COMANDANTE DE GUARDIA</option>
                 </select>
@@ -227,7 +202,7 @@
                 <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
                   <i class="fa-solid fa-shapes text-red-700 mr-1"></i> Actividad Principal
                 </label>
-                <select id="shiftActivity" onchange="updateActivityFigurePreview()" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                <select id="shiftActivity" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
                   <option value="GUARDIA ORDINARIA">🛡️ GUARDIA ORDINARIA</option>
                   <option value="ATENCION DE EMERGENCIA">🚨 ATENCIÓN DE EMERGENCIA</option>
                   <option value="CAPACITACION / ENTRENAMIENTO">🎓 CAPACITACIÓN / ENTRENAMIENTO</option>
@@ -278,15 +253,22 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA (SOLO ROL CENTRAL) -->
+      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA DEDICADA (SOLO ROL CENTRAL) -->
       <section id="TAB_CENTRAL" class="hidden space-y-4">
-        <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-4">
-          <h2 class="text-base font-black uppercase text-slate-900">
-            <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Central de Emergencia — Despacho y Alarma
-          </h2>
-          <p class="text-xs text-slate-600">
-            Módulo exclusivo de Central de Emergencia. Activa la sirena de emergencia y envía el aviso rápido al grupo de WhatsApp.
-          </p>
+        <div class="bg-white rounded-3xl p-5 shadow-md border-4 border-red-700 space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <span class="bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                Consola Dedicada de Central
+              </span>
+              <h2 class="text-lg font-black uppercase text-slate-900 mt-1">
+                <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Central de Emergencia — Despacho y Alarma
+              </h2>
+            </div>
+            <button type="button" onclick="unlockAndPlaySiren()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-2 rounded-xl text-xs uppercase">
+              <i class="fa-solid fa-volume-high mr-1"></i> Probar Sirena
+            </button>
+          </div>
 
           <div class="grid sm:grid-cols-2 gap-3">
             <div>
@@ -308,13 +290,18 @@
 
           <div class="flex flex-wrap gap-2">
             <button onclick="triggerEmergencyState(true)" id="btnActivateSiren"
-              class="flex-1 bg-red-700 hover:bg-red-800 text-white font-black py-3 px-4 rounded-xl uppercase text-xs shadow">
+              class="flex-1 bg-red-700 hover:bg-red-800 text-white font-black py-3.5 px-4 rounded-xl uppercase text-xs shadow">
               <i class="fa-solid fa-bullhorn mr-1"></i> Activar Sirena de Emergencia
             </button>
             <button onclick="shareEmergencyWhatsApp()"
-              class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl uppercase text-xs shadow">
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-4 rounded-xl uppercase text-xs shadow">
               <i class="fa-brands fa-whatsapp mr-1"></i> Enviar a Grupo WhatsApp
             </button>
+          </div>
+
+          <div class="border-t border-slate-200 pt-3">
+            <h3 class="text-xs font-black uppercase text-slate-700 mb-2">Unidades Activas en Guardia</h3>
+            <div id="centralActiveUnitsList" class="space-y-1.5 text-xs"></div>
           </div>
         </div>
       </section>
@@ -424,12 +411,17 @@
 
         <div class="grid md:grid-cols-2 gap-4">
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
-            <h3 class="text-sm font-black uppercase text-slate-900">
-              <i class="fa-solid fa-user-plus text-red-700 mr-1"></i> Registrar / Actualizar Unidad
-            </h3>
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-black uppercase text-slate-900">
+                <i class="fa-solid fa-user-gear text-red-700 mr-1"></i> Unidad, Rol y Restablecer PIN
+              </h3>
+              <button type="button" onclick="clearUserForm()" class="text-[11px] font-bold text-slate-500 hover:text-red-700">
+                Limpiar formulario
+              </button>
+            </div>
             <div class="grid grid-cols-2 gap-2">
               <input type="text" id="admUserCedula" placeholder="Cédula" class="border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
-              <input type="text" id="admUserPin" placeholder="PIN inicial (ej. 1234)" class="border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+              <input type="text" id="admUserPin" placeholder="Nuevo PIN (ej. 1234)" class="border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
             </div>
             <input type="text" id="admUserName" placeholder="Nombre completo" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold uppercase">
             <div class="grid grid-cols-2 gap-2">
@@ -440,12 +432,19 @@
                 <option value="ADMINISTRADOR">ADMINISTRADOR</option>
               </select>
             </div>
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 pt-1">
+              <label class="flex items-center gap-1.5">
+                <input type="checkbox" id="admUserActive" checked class="w-4 h-4"> Unidad Activa
+              </label>
+              <label class="flex items-center gap-1.5">
+                <input type="checkbox" id="admUserForcePin" checked class="w-4 h-4"> Exigir cambio al entrar
+              </label>
+            </div>
             <button onclick="adminSaveUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-2.5 rounded-xl text-xs uppercase">
-              Guardar Unidad en Servidor
+              Guardar Cambios de Unidad / PIN / Rol
             </button>
           </div>
 
-          <!-- GEOCERCA CON PRUEBA DE DISTANCIA EN VIVO Y CONTROL POR UNIDAD (SOLO ADMON) -->
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
             <h3 class="text-sm font-black uppercase text-slate-900">
               <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca de Estación (Solo Admon)
@@ -459,7 +458,6 @@
               </label>
             </div>
 
-            <!-- EJECUCIÓN DE PRUEBA DE DISTANCIA A GEOCERCA -->
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-[11px] font-black uppercase text-slate-700">Prueba de Distancia GPS</span>
@@ -473,15 +471,14 @@
               </div>
             </div>
 
-            <!-- DESACTIVAR / ACTIVAR GEOCERCA A UNIDAD O UNIDADES ESPECÍFICAS -->
             <div class="border-t border-slate-200 pt-2.5 space-y-2">
               <label class="block text-[11px] font-black uppercase text-slate-700">
-                Desactivar / Activar Geocerca a Unidad o Unidades Específicas
+                Excepción de Geocerca por Unidad (Quitar o Agregar)
               </label>
               <div class="flex gap-2">
                 <select id="admExemptUnitSelect" class="flex-1 border-2 border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold"></select>
                 <button type="button" onclick="toggleUnitGeofenceExemption()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-2 rounded-xl text-xs uppercase">
-                  Alternar
+                  Agregar / Quitar
                 </button>
               </div>
               <div id="exemptUnitsChips" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
@@ -490,6 +487,26 @@
             <button onclick="adminSaveGeofence()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-2.5 rounded-xl text-xs uppercase">
               Guardar Configuración GPS en Servidor
             </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
+          <h3 class="text-sm font-black uppercase text-slate-900">
+            <i class="fa-solid fa-users-gear text-red-700 mr-1"></i> Personal Registrado (Editar Rol / Restablecer PIN)
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 uppercase font-black">
+                <tr>
+                  <th class="p-2.5">Cédula / Nombre</th>
+                  <th class="p-2.5">Rango</th>
+                  <th class="p-2.5">Rol</th>
+                  <th class="p-2.5">Estado</th>
+                  <th class="p-2.5 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody" class="divide-y divide-slate-200"></tbody>
+            </table>
           </div>
         </div>
 
@@ -526,7 +543,7 @@
     const EXTERNAL_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec';
     const FIXED_STATION_LAT = 3.65855;
     const FIXED_STATION_LNG = -76.24802;
-    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v11';
+    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v13';
 
     let currentSession = null;
     let appState = {
@@ -539,27 +556,18 @@
     let selectedUnitCedula = '';
     let exemptUnitsDraft = [];
     let isSyncingNow = false;
+    let autoClosingOnExit = false;
     let sirenAudioCtx = null;
     let sirenInterval = null;
     let sirenMutedLocally = false;
 
     const ACTIVITY_FIGURES = {
-      'GUARDIA ORDINARIA': { icon: 'fa-shield-heart', title: 'GUARDIA ORDINARIA', sub: 'Vigilancia y disponibilidad en estación' },
-      'ATENCION DE EMERGENCIA': { icon: 'fa-truck-medical', title: 'ATENCIÓN DE EMERGENCIA', sub: 'Respuesta operativa inmediata a despacho' },
-      'CAPACITACION / ENTRENAMIENTO': { icon: 'fa-graduation-cap', title: 'CAPACITACIÓN / ENTRENAMIENTO', sub: 'Instrucción y prácticas bomberiles' },
-      'MANTENIMIENTO MAQUINAS Y EQUIPO': { icon: 'fa-wrench', title: 'MANTENIMIENTO MÁQUINAS Y EQUIPO', sub: 'Revisión de unidades, bombas y herramientas' },
-      'SERVICIO FUERA DE ESTACION': { icon: 'fa-route', title: 'SERVICIO FUERA DE ESTACIÓN', sub: 'Apoyo o comisión autorizada fuera del cuartel' }
+      'GUARDIA ORDINARIA': { icon: 'fa-shield-heart' },
+      'ATENCION DE EMERGENCIA': { icon: 'fa-truck-medical' },
+      'CAPACITACION / ENTRENAMIENTO': { icon: 'fa-graduation-cap' },
+      'MANTENIMIENTO MAQUINAS Y EQUIPO': { icon: 'fa-wrench' },
+      'SERVICIO FUERA DE ESTACION': { icon: 'fa-route' }
     };
-
-    function updateActivityFigurePreview() {
-      const act = document.getElementById('shiftActivity').value;
-      const cond = document.getElementById('shiftCondition').value;
-      const cfg = ACTIVITY_FIGURES[act] || ACTIVITY_FIGURES['GUARDIA ORDINARIA'];
-      const badge = document.getElementById('activityVisualBadge');
-      badge.innerHTML = `<i class="fa-solid ${cfg.icon}"></i>`;
-      document.getElementById('activityVisualTitle').textContent = cfg.title;
-      document.getElementById('activityVisualSub').textContent = `${cfg.sub} • ${cond.replaceAll('_', ' ')}`;
-    }
 
     function calculateDistanceMetersLocal(lat1, lon1, lat2, lon2) {
       const R = 6371000;
@@ -595,15 +603,16 @@
       }
     }
 
-    async function callServerApi(payload) {
+    async function callServerApi(payload, useKeepalive = false) {
       const res = await fetch(EXTERNAL_GAS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        keepalive: useKeepalive
       });
       const data = await res.json();
       if (data.authExpired) {
-        logoutUser();
+        clearSessionOnly();
         throw new Error(data.error || 'Sesión expirada.');
       }
       return data;
@@ -683,26 +692,31 @@
       alert('PIN actualizado correctamente.');
     }
 
-    function applyRolePermissions(rol) {
+    function applyRoleLayout(rol) {
       const cleanRole = String(rol || 'DIGITADOR').toUpperCase();
-      const btnCentral = document.getElementById('btnTabCentral');
+      const nav = document.getElementById('mainNavGrid');
       const btnAdmin = document.getElementById('btnTabAdmin');
       const btnDeactTop = document.getElementById('btnDeactivateEmergencyTop');
-      const nav = document.getElementById('mainNavGrid');
+      const btnPin = document.getElementById('btnHeaderPin');
 
-      btnCentral.classList.add('hidden');
       btnAdmin.classList.add('hidden');
       btnDeactTop.classList.add('hidden');
+      btnPin.classList.remove('hidden');
 
       if (cleanRole === 'CENTRAL') {
-        btnCentral.classList.remove('hidden');
+        nav.classList.add('hidden');
         btnDeactTop.classList.remove('hidden');
-        nav.className = 'grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+        btnPin.classList.add('hidden');
+        switchTab('TAB_CENTRAL');
       } else if (cleanRole === 'ADMINISTRADOR') {
-        btnAdmin.classList.remove('hidden');
+        nav.classList.remove('hidden');
         nav.className = 'grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+        btnAdmin.classList.remove('hidden');
+        switchTab('TAB_TURNO');
       } else {
+        nav.classList.remove('hidden');
         nav.className = 'grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+        switchTab('TAB_TURNO');
       }
     }
 
@@ -715,13 +729,11 @@
       document.getElementById('headerUserName').textContent = u.nombre;
       document.getElementById('headerUserMeta').textContent = `${u.rango} • ${rol}`;
 
-      applyRolePermissions(rol);
-      updateActivityFigurePreview();
-      switchTab('TAB_TURNO');
+      applyRoleLayout(rol);
       syncWithServer(true);
     }
 
-    function logoutUser() {
+    function clearSessionOnly() {
       currentSession = null;
       localStorage.removeItem(STORAGE_KEY_SESSION);
       stopLocalSirenSound();
@@ -729,6 +741,41 @@
       document.getElementById('loginView').classList.remove('hidden');
       document.getElementById('loginPin').value = '';
     }
+
+    async function logoutUser() {
+      if (currentSession) {
+        const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
+        if (myActive) {
+          try {
+            await callServerApi({ action: 'END_SHIFT', token: currentSession.token, id: myActive.id }, true);
+          } catch (e) {}
+        }
+      }
+      clearSessionOnly();
+    }
+
+    function handleAppExitAutoClose() {
+      if (!currentSession || autoClosingOnExit) return;
+      const rol = String(currentSession.user?.rol || '').toUpperCase();
+      if (rol === 'CENTRAL') return;
+
+      const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
+      if (!myActive) return;
+
+      autoClosingOnExit = true;
+      try {
+        fetch(EXTERNAL_GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'END_SHIFT', token: currentSession.token, id: myActive.id }),
+          keepalive: true
+        }).catch(() => {});
+      } catch (e) {}
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+    }
+
+    window.addEventListener('pagehide', handleAppExitAutoClose);
+    window.addEventListener('beforeunload', handleAppExitAutoClose);
 
     async function syncWithServer(showSpinner = false) {
       if (!currentSession || isSyncingNow) return;
@@ -756,9 +803,11 @@
         updateEmergencyUI();
         renderTurnoView();
         renderMyHoursView();
+        renderCentralActiveUnits();
         if (String(currentSession.user.rol).toUpperCase() === 'ADMINISTRADOR') {
           renderExemptUnitsManager();
           renderAdminConsolidated();
+          renderAdminUsersTable();
         }
       } catch (e) {} finally {
         isSyncingNow = false;
@@ -770,6 +819,7 @@
       const rol = String(currentSession?.user?.rol || 'DIGITADOR').toUpperCase();
       if (tabId === 'TAB_CENTRAL' && rol !== 'CENTRAL') tabId = 'TAB_TURNO';
       if (tabId === 'TAB_ADMIN' && rol !== 'ADMINISTRADOR') tabId = 'TAB_TURNO';
+      if (rol === 'CENTRAL') tabId = 'TAB_CENTRAL';
 
       ['TAB_TURNO', 'TAB_MIS_HORAS', 'TAB_CENTRAL', 'TAB_ADMIN'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
@@ -779,17 +829,19 @@
       const map = {
         TAB_TURNO: 'btnTabTurno',
         TAB_MIS_HORAS: 'btnTabMisHoras',
-        TAB_CENTRAL: 'btnTabCentral',
         TAB_ADMIN: 'btnTabAdmin'
       };
       Object.values(map).forEach(btnId => {
         const b = document.getElementById(btnId);
+        if (!b) return;
         b.classList.remove('bg-white', 'text-red-800');
         b.classList.add('bg-red-950/50', 'text-white');
       });
-      const activeBtn = document.getElementById(map[tabId]);
-      activeBtn.classList.remove('bg-red-950/50', 'text-white');
-      activeBtn.classList.add('bg-white', 'text-red-800');
+      if (map[tabId]) {
+        const activeBtn = document.getElementById(map[tabId]);
+        activeBtn.classList.remove('bg-red-950/50', 'text-white');
+        activeBtn.classList.add('bg-white', 'text-red-800');
+      }
     }
 
     function formatSecondsHMS(totalSec) {
@@ -917,6 +969,22 @@
       }).join('');
     }
 
+    function renderCentralActiveUnits() {
+      const box = document.getElementById('centralActiveUnitsList');
+      if (!box) return;
+      const activeShifts = appState.turnos.filter(t => t.estado === 'ACTIVO');
+      if (activeShifts.length === 0) {
+        box.innerHTML = '<div class="text-slate-500 italic">Sin unidades activas en guardia.</div>';
+        return;
+      }
+      box.innerHTML = activeShifts.map(t =>
+        `<div class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex justify-between items-center">
+          <span class="font-bold text-slate-900">${t.nombre} (${t.rango})</span>
+          <span class="text-[10px] font-black uppercase text-emerald-700">${t.condicion}</span>
+        </div>`
+      ).join('');
+    }
+
     function renderMyHoursView() {
       const mine = appState.turnos
         .filter(t => t.cedula === currentSession.user.cedula && t.estado === 'FINALIZADO')
@@ -944,9 +1012,7 @@
     }
 
     function renderExemptUnitsManager() {
-      if (!Array.isArray(exemptUnitsDraft) || (exemptUnitsDraft.length === 0 && appState.geofence.exemptCedulas?.length)) {
-        exemptUnitsDraft = [...(appState.geofence.exemptCedulas || [])];
-      }
+      exemptUnitsDraft = [...(appState.geofence.exemptCedulas || [])];
       const sel = document.getElementById('admExemptUnitSelect');
       sel.innerHTML = appState.personal.map(p =>
         `<option value="${p.cedula}">${p.nombre} (${p.cedula})</option>`
@@ -954,7 +1020,7 @@
 
       const chipsEl = document.getElementById('exemptUnitsChips');
       if (exemptUnitsDraft.length === 0) {
-        chipsEl.innerHTML = '<span class="text-[11px] text-slate-500">Todas las unidades sujetas a la regla general de geocerca.</span>';
+        chipsEl.innerHTML = '<span class="text-[11px] text-slate-500">Ninguna unidad exenta; todas sujetas a la geocerca.</span>';
         return;
       }
 
@@ -964,7 +1030,7 @@
         return `
           <span class="inline-flex items-center gap-1.5 bg-amber-100 border border-amber-300 text-amber-950 text-[11px] font-extrabold px-2.5 py-1 rounded-full">
             <span>Sin GPS: ${label}</span>
-            <button type="button" onclick="removeExemptUnit('${ced}')" class="text-red-700 hover:text-red-900 font-black">×</button>
+            <button type="button" onclick="removeExemptUnit('${ced}')" title="Quitar permiso" class="bg-red-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-black">×</button>
           </span>
         `;
       }).join('');
@@ -984,6 +1050,53 @@
     function removeExemptUnit(ced) {
       exemptUnitsDraft = exemptUnitsDraft.filter(x => x !== ced);
       renderExemptUnitsManager();
+    }
+
+    function renderAdminUsersTable() {
+      const tbody = document.getElementById('adminUsersTableBody');
+      if (!tbody) return;
+      if (!appState.personal.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-slate-500">Sin unidades registradas.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = appState.personal.map(p => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-2.5">
+            <div class="font-black text-slate-900">${p.nombre}</div>
+            <div class="text-[11px] text-slate-500">CC: ${p.cedula}</div>
+          </td>
+          <td class="p-2.5 text-[11px] font-bold">${p.rango || '-'}</td>
+          <td class="p-2.5"><span class="bg-slate-200 text-slate-800 px-2 py-0.5 rounded-lg text-[10px] font-black">${p.rol}</span></td>
+          <td class="p-2.5 text-[11px] font-bold ${p.activo ? 'text-emerald-700' : 'text-red-700'}">${p.activo ? 'ACTIVO' : 'INACTIVO'}</td>
+          <td class="p-2.5 text-right">
+            <button type="button" onclick="loadUserIntoForm('${p.cedula}')" class="bg-amber-100 hover:bg-amber-200 text-amber-950 font-black px-2.5 py-1 rounded-lg text-[11px]">
+              Editar / PIN / Rol
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function loadUserIntoForm(cedula) {
+      const p = appState.personal.find(x => x.cedula === cedula);
+      if (!p) return;
+      document.getElementById('admUserCedula').value = p.cedula;
+      document.getElementById('admUserName').value = p.nombre;
+      document.getElementById('admUserRank').value = p.rango || '';
+      document.getElementById('admUserRole').value = String(p.rol || 'DIGITADOR').toUpperCase();
+      document.getElementById('admUserActive').checked = Boolean(p.activo);
+      document.getElementById('admUserPin').value = '';
+      document.getElementById('admUserCedula').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function clearUserForm() {
+      document.getElementById('admUserCedula').value = '';
+      document.getElementById('admUserPin').value = '';
+      document.getElementById('admUserName').value = '';
+      document.getElementById('admUserRank').value = '';
+      document.getElementById('admUserRole').value = 'DIGITADOR';
+      document.getElementById('admUserActive').checked = true;
+      document.getElementById('admUserForcePin').checked = true;
     }
 
     function handleUnitSearchInput(query) {
@@ -1242,6 +1355,8 @@
       const nombre = document.getElementById('admUserName').value.trim();
       const rango = document.getElementById('admUserRank').value.trim();
       const rol = document.getElementById('admUserRole').value;
+      const activo = document.getElementById('admUserActive').checked;
+      const forcePinChange = document.getElementById('admUserForcePin').checked;
 
       if (!cedula || !nombre) {
         alert('Cédula y nombre son obligatorios.');
@@ -1251,17 +1366,21 @@
       const res = await callServerApi({
         action: 'ADMIN_SAVE_USER',
         token: currentSession.token,
-        cedula, pin, resetPin: pin, nombre, rango, rol, activo: true
+        cedula,
+        pin,
+        resetPin: pin,
+        nombre,
+        rango,
+        rol,
+        activo,
+        forcePinChange
       });
       if (!res.ok) {
         alert(res.error);
         return;
       }
-      alert('Unidad guardada con PIN cifrado en el servidor.');
-      document.getElementById('admUserCedula').value = '';
-      document.getElementById('admUserPin').value = '';
-      document.getElementById('admUserName').value = '';
-      document.getElementById('admUserRank').value = '';
+      alert('Unidad, rol y PIN guardados en el servidor.');
+      clearUserForm();
       await syncWithServer(true);
     }
 
@@ -1400,7 +1519,6 @@
     }, 30000);
 
     window.onload = function () {
-      updateActivityFigurePreview();
       const saved = localStorage.getItem(STORAGE_KEY_SESSION);
       if (saved) {
         try {
