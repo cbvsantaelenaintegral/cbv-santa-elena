@@ -27,25 +27,22 @@
 </head>
 <body class="min-h-screen text-slate-900 pb-12">
 
-  <!-- BANNER DE EMERGENCIA ACTIVA -->
+  <!-- BANNER DE EMERGENCIA ACTIVA (SOLO EN DISPOSITIVOS DE UNIDADES / ADMIN) -->
   <div id="emergencyBanner" class="hidden siren-active-banner text-white px-4 py-3 shadow-xl border-b-4 border-amber-400 sticky top-0 z-50">
     <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <i class="fa-solid fa-bell text-2xl text-amber-300 animate-bounce"></i>
+        <span id="emergencyBannerEmoji" class="text-2xl animate-bounce">🚨</span>
         <div>
-          <div class="text-xs font-black uppercase tracking-wider text-amber-300">🚨 ALERTA DE EMERGENCIA ACTIVA</div>
+          <div class="text-xs font-black uppercase tracking-wider text-amber-300">ALERTA DE EMERGENCIA ACTIVA</div>
           <div id="emergencyBannerText" class="text-sm font-extrabold">INCENDIO / EMERGENCIA EN CURSO</div>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button onclick="unlockAndPlaySiren()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl">
-          <i class="fa-solid fa-volume-high mr-1"></i> Sonar Sirena Aquí
+          <i class="fa-solid fa-volume-high mr-1"></i> Sonar Sirena
         </button>
         <button onclick="stopLocalSirenSound()" class="bg-slate-950/75 hover:bg-slate-950 text-white text-xs font-extrabold px-3 py-2 rounded-xl border border-white/20">
           <i class="fa-solid fa-volume-xmark mr-1"></i> Silenciar
-        </button>
-        <button id="btnDeactivateEmergencyTop" onclick="triggerEmergencyState(false)" class="hidden bg-white hover:bg-slate-100 text-red-900 text-xs font-black px-3 py-2 rounded-xl">
-          Desactivar Alarma
         </button>
       </div>
     </div>
@@ -128,7 +125,7 @@
           <i class="fa-solid fa-lock"></i>
         </div>
         <h3 class="text-base font-black uppercase text-slate-900">Salida Protegida de Central</h3>
-        <p class="text-xs text-slate-600 mt-1">Ingresa la clave/PIN de Administrador para salir o cerrar la consola de Central.</p>
+        <p class="text-xs text-slate-600 mt-1">Ingresa la clave/PIN de Administrador para salir de la consola de Central.</p>
       </div>
       <input type="password" id="centralAdminPinInput" inputmode="numeric" placeholder="Clave de Administrador"
         class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-center font-black tracking-widest text-sm">
@@ -277,50 +274,95 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA DEDICADA (SOLO ROL CENTRAL) -->
+      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA DEDICADA (SOLO ROL CENTRAL — SIN SONIDO LOCAL) -->
       <section id="TAB_CENTRAL" class="hidden space-y-4">
         <div class="bg-white rounded-3xl p-5 shadow-md border-4 border-red-700 space-y-4">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <span class="bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                Central de Emergencia • Bloqueada con Clave Admon
-              </span>
-              <h2 class="text-lg font-black uppercase text-slate-900 mt-1">
-                <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Despacho y Sirena de Emergencia
-              </h2>
-            </div>
-            <button type="button" onclick="unlockAndPlaySiren()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-2 rounded-xl text-xs uppercase">
-              <i class="fa-solid fa-volume-high mr-1"></i> Probar Sirena
-            </button>
+          <div>
+            <span class="bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+              Central de Emergencia • Protegida con Clave Admon
+            </span>
+            <h2 class="text-lg font-black uppercase text-slate-900 mt-1">
+              <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Despacho de Emergencia
+            </h2>
           </div>
 
-          <div class="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Tipo de Emergencia</label>
-              <select id="emergType" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
-                <option value="INCENDIO ESTRUCTURAL">INCENDIO ESTRUCTURAL</option>
-                <option value="INCENDIO FORESTAL / CAÑADUZAL">INCENDIO FORESTAL / CAÑADUZAL</option>
-                <option value="ACCIDENTE DE TRANSITO">ACCIDENTE DE TRÁNSITO</option>
-                <option value="EMERGENCIA MEDICA / RESCATE">EMERGENCIA MÉDICA / RESCATE</option>
-                <option value="FUGA DE GAS / MATERIALES PELIGROSOS">FUGA DE GAS / MATPEL</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Dirección / Novedad Sucedida</label>
-              <input type="text" id="emergLocation" placeholder="Ej: Calle 4 con Cra 7, Santa Elena"
-                class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+          <!-- BOTONES VISUALES CON FIGURAS POR TIPO DE EMERGENCIA -->
+          <div>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 mb-2">Selecciona el Tipo de Emergencia</label>
+            <input type="hidden" id="emergType" value="INCENDIO ESTRUCTURAL">
+            <input type="hidden" id="emergEmoji" value="🔥">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="emergencyTypeGrid">
+              <button type="button" onclick="selectEmergencyType('INCENDIO ESTRUCTURAL', '🔥', this)"
+                class="emerg-card-btn border-2 border-red-700 bg-red-50 rounded-2xl p-3 text-left flex items-center gap-2.5 shadow-sm">
+                <span class="text-2xl">🔥</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">INCENDIO ESTRUCTURAL</div>
+                  <div class="text-[10px] text-slate-500">Vivienda / Local</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('INCENDIO FORESTAL / CAÑADUZAL', '🌾', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5">
+                <span class="text-2xl">🌾</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">INCENDIO FORESTAL</div>
+                  <div class="text-[10px] text-slate-500">Cañaduzal / Vegetal</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('ACCIDENTE DE TRANSITO', '🚗', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5">
+                <span class="text-2xl">🚗</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">ACCIDENTE TRÁNSITO</div>
+                  <div class="text-[10px] text-slate-500">Colisión / Vehicular</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('EMERGENCIA MEDICA / RESCATE', '🚑', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5">
+                <span class="text-2xl">🚑</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">EMERGENCIA MÉDICA</div>
+                  <div class="text-[10px] text-slate-500">Atención / Rescate</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('FUGA DE GAS / MATERIALES PELIGROSOS', '☣️', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5 col-span-2 sm:col-span-1">
+                <span class="text-2xl">☣️</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">FUGA GAS / MATPEL</div>
+                  <div class="text-[10px] text-slate-500">Químico / Cilindro</div>
+                </div>
+              </button>
             </div>
           </div>
 
+          <div>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Dirección / Detalle de lo Sucedido</label>
+            <input type="text" id="emergLocation" placeholder="Ej: Calle 4 con Cra 7, Santa Elena — Vivienda en llamas"
+              class="w-full border-2 border-slate-300 focus:border-red-700 rounded-xl px-4 py-3 text-xs font-bold outline-none">
+          </div>
+
+          <!-- BOTÓN GRANDE ACTIVAR SIRENA / EMERGENCIA -->
           <button onclick="triggerEmergencyState(true)" id="btnActivateSiren"
-            class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-4 px-4 rounded-2xl uppercase text-sm shadow-xl flex items-center justify-center gap-2">
-            <i class="fa-solid fa-bullhorn text-lg"></i>
+            class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-5 px-4 rounded-2xl uppercase text-base shadow-xl flex items-center justify-center gap-3">
+            <i class="fa-solid fa-bullhorn text-xl"></i>
             <span>Activar Sirena / Emergencia</span>
           </button>
 
+          <!-- BOTÓN GRANDE DESACTIVAR DEBAJO CON AUTO-APAGADO EN 1 MINUTO (60s) -->
+          <button onclick="triggerEmergencyState(false)" id="btnDeactivateSirenLarge"
+            class="hidden w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-4 px-4 rounded-2xl uppercase text-sm shadow-lg border-2 border-slate-900 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bell-slash text-lg"></i>
+            <span id="btnDeactivateSirenLabel">Desactivar Alarma (Auto-apagado en 60s)</span>
+          </button>
+
+          <!-- BOTÓN WHATSAPP CON FIGURAS Y REPORTE DE LO SUCEDIDO -->
           <button onclick="shareEmergencyWhatsApp()"
-            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-4 rounded-2xl uppercase text-xs shadow-lg flex items-center justify-center gap-2">
-            <i class="fa-brands fa-whatsapp text-base"></i>
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-4 rounded-2xl uppercase text-sm shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-brands fa-whatsapp text-lg"></i>
             <span>Enviar Reporte a Grupo WhatsApp</span>
           </button>
         </div>
@@ -430,7 +472,6 @@
         </div>
 
         <div class="grid md:grid-cols-2 gap-4">
-          <!-- UNIDAD, ROL Y RESTABLECER PIN -->
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-black uppercase text-slate-900">
@@ -466,7 +507,6 @@
             </button>
           </div>
 
-          <!-- GEOCERCA DE ESTACIÓN (SOLO ADMON) -->
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
             <h3 class="text-sm font-black uppercase text-slate-900">
               <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca de Estación (Solo Admon)
@@ -565,7 +605,8 @@
     const EXTERNAL_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec';
     const FIXED_STATION_LAT = 3.65855;
     const FIXED_STATION_LNG = -76.24802;
-    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v14';
+    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v15';
+    const EMERGENCY_AUTO_OFF_SEC = 60;
 
     let currentSession = null;
     let appState = {
@@ -583,11 +624,36 @@
     let sirenAudioCtx = null;
     let sirenInterval = null;
     let sirenMutedLocally = false;
+    let audioUnlocked = false;
+    let autoOffHandledForTs = '';
 
     function isCentralUser(rol) {
       const r = String(rol || '').toUpperCase().trim();
       return r === 'CENTRAL' || r === 'CENTRAL_EMERGENCIA' || r === 'CENTRAL DE EMERGENCIA';
     }
+
+    // DESBLOQUEAR AUDIO EN PRIMER TOQUE DEL USUARIO (PERMITIR SONIDO AUTOMÁTICO EN MÓVILES)
+    function preUnlockAudioEngine() {
+      if (audioUnlocked) return;
+      try {
+        if (!sirenAudioCtx) {
+          sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+          sirenAudioCtx.resume();
+        }
+        const buffer = sirenAudioCtx.createBuffer(1, 1, 22050);
+        const source = sirenAudioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(sirenAudioCtx.destination);
+        source.start(0);
+        audioUnlocked = true;
+      } catch (e) {}
+    }
+
+    ['touchstart', 'click', 'keydown'].forEach(evt => {
+      document.addEventListener(evt, preUnlockAudioEngine, { passive: true });
+    });
 
     function toLocalYMD(dateInput) {
       const d = new Date(dateInput);
@@ -648,6 +714,7 @@
 
     async function handleSecureLogin(e) {
       e.preventDefault();
+      preUnlockAudioEngine();
       const cedula = document.getElementById('loginCedula').value.trim();
       const pin = document.getElementById('loginPin').value.trim();
       const errBox = document.getElementById('loginErrorBox');
@@ -724,17 +791,15 @@
       const cleanRole = String(rol || 'DIGITADOR').toUpperCase();
       const nav = document.getElementById('mainNavGrid');
       const btnAdmin = document.getElementById('btnTabAdmin');
-      const btnDeactTop = document.getElementById('btnDeactivateEmergencyTop');
       const btnPin = document.getElementById('btnHeaderPin');
 
       btnAdmin.classList.add('hidden');
-      btnDeactTop.classList.add('hidden');
       btnPin.classList.remove('hidden');
 
       if (isCentralUser(cleanRole)) {
         nav.classList.add('hidden');
-        btnDeactTop.classList.remove('hidden');
         btnPin.classList.add('hidden');
+        stopLocalSirenSound();
         switchTab('TAB_CENTRAL');
       } else if (cleanRole === 'ADMINISTRADOR') {
         nav.classList.remove('hidden');
@@ -873,6 +938,19 @@
       }
     }
 
+    // SONDEO RÁPIDO EXCLUSIVO DE EMERGENCIA (CADA 4 SEGUNDOS)
+    async function pollEmergencyFast() {
+      if (!currentSession || isSyncingNow) return;
+      try {
+        const res = await fetch(EXTERNAL_GAS_API_URL + '?t=' + Date.now());
+        const data = await res.json();
+        if (data && data.ok && data.emergency) {
+          appState.emergency = data.emergency;
+          updateEmergencyUI();
+        }
+      } catch (e) {}
+    }
+
     function switchTab(tabId) {
       const rol = String(currentSession?.user?.rol || 'DIGITADOR').toUpperCase();
       if (isCentralUser(rol)) tabId = 'TAB_CENTRAL';
@@ -929,6 +1007,7 @@
     }
 
     async function startNewShift() {
+      preUnlockAudioEngine();
       const btn = document.getElementById('btnStartShift');
       const unitExempt = Array.isArray(appState.geofence.exemptCedulas) &&
                        appState.geofence.exemptCedulas.includes(String(currentSession.user.cedula).trim());
@@ -1451,12 +1530,27 @@
       await syncWithServer(true);
     }
 
+    // SELECCIÓN VISUAL DE TIPO DE EMERGENCIA CON FIGURAS
+    function selectEmergencyType(type, emoji, btnEl) {
+      document.getElementById('emergType').value = type;
+      document.getElementById('emergEmoji').value = emoji;
+      document.querySelectorAll('.emerg-card-btn').forEach(b => {
+        b.classList.remove('border-red-700', 'bg-red-50', 'shadow-sm');
+        b.classList.add('border-slate-200', 'bg-white');
+      });
+      if (btnEl) {
+        btnEl.classList.remove('border-slate-200', 'bg-white');
+        btnEl.classList.add('border-red-700', 'bg-red-50', 'shadow-sm');
+      }
+    }
+
     async function triggerEmergencyState(active) {
       if (!isCentralUser(currentSession?.user?.rol)) {
         alert('Solo el perfil CENTRAL DE EMERGENCIA puede operar la alarma.');
         return;
       }
       const type = document.getElementById('emergType').value;
+      const emoji = document.getElementById('emergEmoji').value || '🚨';
       const location = document.getElementById('emergLocation').value.trim() || 'Jurisdicción Santa Elena';
 
       const res = await callServerApi({
@@ -1464,6 +1558,7 @@
         token: currentSession.token,
         active,
         type,
+        emoji,
         location,
         by: currentSession.user.nombre
       });
@@ -1471,40 +1566,69 @@
         alert(res.error);
         return;
       }
-      sirenMutedLocally = false;
-      await syncWithServer(true);
+      appState.emergency = res.emergency || { active: false };
+      updateEmergencyUI();
     }
 
     function updateEmergencyUI() {
       const banner = document.getElementById('emergencyBanner');
+      const btnDeactLarge = document.getElementById('btnDeactivateSirenLarge');
+      const onCentralScreen = isCentralUser(currentSession?.user?.rol);
+
       if (appState.emergency && appState.emergency.active) {
-        banner.classList.remove('hidden');
-        document.getElementById('emergencyBannerText').textContent =
-          `${appState.emergency.type} • ${appState.emergency.location} (Despacha: ${appState.emergency.by})`;
-        if (!sirenMutedLocally) startLocalSirenSound();
+        const startedMs = new Date(appState.emergency.timestamp || Date.now()).getTime();
+        const elapsedSec = Math.floor((Date.now() - startedMs) / 1000);
+        const remainingSec = Math.max(0, EMERGENCY_AUTO_OFF_SEC - elapsedSec);
+
+        // AUTO-APAGADO AL CUMPLIRSE 1 MINUTO (60s)
+        if (remainingSec <= 0) {
+          appState.emergency.active = false;
+          stopLocalSirenSound();
+          if (onCentralScreen && autoOffHandledForTs !== appState.emergency.timestamp) {
+            autoOffHandledForTs = appState.emergency.timestamp;
+            triggerEmergencyState(false);
+          }
+          banner.classList.add('hidden');
+          if (btnDeactLarge) btnDeactLarge.classList.add('hidden');
+          return;
+        }
+
+        if (onCentralScreen) {
+          // EN CENTRAL DE EMERGENCIA NO SUENA LA SIRENA, SOLO SE MUESTRA EL BOTÓN GRANDE DE DESACTIVAR
+          banner.classList.add('hidden');
+          stopLocalSirenSound();
+          if (btnDeactLarge) {
+            btnDeactLarge.classList.remove('hidden');
+            document.getElementById('btnDeactivateSirenLabel').textContent =
+              `Desactivar Alarma (Auto-apagado en ${remainingSec}s)`;
+          }
+        } else {
+          // EN DISPOSITIVOS DE UNIDADES Y ADMIN SUENA AUTOMÁTICAMENTE
+          if (btnDeactLarge) btnDeactLarge.classList.add('hidden');
+          banner.classList.remove('hidden');
+          document.getElementById('emergencyBannerEmoji').textContent = appState.emergency.emoji || '🚨';
+          document.getElementById('emergencyBannerText').textContent =
+            `${appState.emergency.type} • ${appState.emergency.location} (Despacha: ${appState.emergency.by})`;
+          if (!sirenMutedLocally) startLocalSirenSound();
+        }
       } else {
         banner.classList.add('hidden');
+        if (btnDeactLarge) btnDeactLarge.classList.add('hidden');
         stopLocalSirenSound();
       }
     }
 
     function unlockAndPlaySiren() {
+      if (isCentralUser(currentSession?.user?.rol)) return;
       sirenMutedLocally = false;
-      try {
-        if (!sirenAudioCtx) {
-          sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (sirenAudioCtx.state === 'suspended') {
-          sirenAudioCtx.resume();
-        }
-      } catch (e) {}
+      preUnlockAudioEngine();
       stopLocalSirenSound();
       sirenMutedLocally = false;
       startLocalSirenSound();
     }
 
     function startLocalSirenSound() {
-      if (sirenInterval) return;
+      if (sirenInterval || isCentralUser(currentSession?.user?.rol)) return;
       try {
         if (!sirenAudioCtx) {
           sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1519,7 +1643,7 @@
           const gain = sirenAudioCtx.createGain();
           osc.type = 'sawtooth';
           osc.frequency.value = high ? 960 : 620;
-          gain.gain.value = 0.25;
+          gain.gain.value = 0.28;
           osc.connect(gain);
           gain.connect(sirenAudioCtx.destination);
           osc.start();
@@ -1539,12 +1663,13 @@
 
     function shareEmergencyWhatsApp() {
       const type = document.getElementById('emergType').value;
+      const emoji = document.getElementById('emergEmoji').value || '🚨';
       const location = document.getElementById('emergLocation').value.trim() || 'Por confirmar';
       const msg = `🚨 *ALARMA BOMBEROS VOLUNTARIOS SANTA ELENA*\n` +
-                  `• *Emergencia:* ${type}\n` +
-                  `• *Ubicación / Novedad:* ${location}\n` +
-                  `• *Hora:* ${new Date().toLocaleTimeString('es-CO')}\n` +
-                  `• *Despacha:* ${currentSession.user.nombre}\n` +
+                  `${emoji} *Tipo:* ${type}\n` +
+                  `📍 *Ubicación / Novedad:* ${location}\n` +
+                  `🕒 *Hora:* ${new Date().toLocaleTimeString('es-CO')}\n` +
+                  `📡 *Despacha:* ${currentSession.user.nombre}\n` +
                   `_Unidades disponibles reportarse de inmediato._`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
@@ -1556,8 +1681,17 @@
         const secs = Math.floor((Date.now() - new Date(myActive.inicio).getTime()) / 1000);
         document.getElementById('liveShiftTimer').textContent = formatSecondsHMS(secs);
       }
+      if (appState.emergency && appState.emergency.active) {
+        updateEmergencyUI();
+      }
     }, 1000);
 
+    // SONDEO RÁPIDO DE ALARMA CADA 4 SEGUNDOS
+    setInterval(() => {
+      if (currentSession) pollEmergencyFast();
+    }, 4000);
+
+    // SINCRONIZACIÓN DE TURNOS Y PERSONAL CADA 30 SEGUNDOS
     setInterval(() => {
       if (currentSession && !document.hidden) syncWithServer(false);
     }, 30000);
