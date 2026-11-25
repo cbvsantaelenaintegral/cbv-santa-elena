@@ -94,7 +94,7 @@
     </div>
   </div>
 
-  <!-- MODAL CAMBIO DE PIN CON BOTÓN CANCELAR / ATRÁS -->
+  <!-- MODAL CAMBIO DE PIN CON BOTÓN CANCELAR -->
   <div id="forcePinModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-amber-400 shadow-2xl space-y-4">
       <div class="text-center">
@@ -185,7 +185,7 @@
             <div>
               <div class="text-[10px] font-black uppercase text-red-700">Figura de Actividad Seleccionada</div>
               <div id="activityVisualTitle" class="text-xs font-black text-slate-900">GUARDIA ORDINARIA</div>
-              <div id="activityVisualSub" class="text-[11px] text-slate-600 mt-0.5">Disponibilidad y vigilancia en cuartel</div>
+              <div id="activityVisualSub" class="text-[11px] text-slate-600 mt-0.5">Vigilancia y disponibilidad en estación</div>
             </div>
           </div>
         </div>
@@ -221,7 +221,6 @@
                 <select id="shiftCondition" onchange="updateActivityFigurePreview()" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
                   <option value="DISPONIBLE">🟢 DISPONIBLE EN ESTACIÓN</option>
                   <option value="COMANDANTE DE GUARDIA">🟡 COMANDANTE DE GUARDIA</option>
-                  <option value="DISPONIBLE FUERA DE ESTACION">🔵 DISPONIBLE FUERA DE ESTACIÓN</option>
                 </select>
               </div>
               <div>
@@ -446,20 +445,35 @@
             </button>
           </div>
 
-          <!-- CONTROL EXCLUSIVO DE ADMINISTRADOR: GEOCERCA GENERAL Y POR UNIDAD -->
+          <!-- GEOCERCA CON PRUEBA DE DISTANCIA EN VIVO Y CONTROL POR UNIDAD (SOLO ADMON) -->
           <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 space-y-3">
             <h3 class="text-sm font-black uppercase text-slate-900">
-              <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca General y por Unidad (Solo Admin)
+              <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca de Estación (Solo Admon)
             </h3>
             <p class="text-xs text-slate-600">Coordenadas fijas: <strong>3.65855, -76.24802</strong> (Calle 4 6A-4, Santa Elena).</p>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3">
               <label class="text-xs font-extrabold">Radio (m):</label>
               <input type="number" id="admGeoRadius" value="80" min="30" max="500" class="w-24 border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
               <label class="flex items-center gap-1.5 text-xs font-extrabold">
-                <input type="checkbox" id="admGeoActive" checked class="w-4 h-4"> Activar / Desactivar Geocerca
+                <input type="checkbox" id="admGeoActive" checked class="w-4 h-4"> Activar Geocerca
               </label>
             </div>
 
+            <!-- EJECUCIÓN DE PRUEBA DE DISTANCIA A GEOCERCA -->
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-black uppercase text-slate-700">Prueba de Distancia GPS</span>
+                <button type="button" onclick="testGeofenceDistanceNow()" id="btnTestGeoDist"
+                  class="bg-slate-900 hover:bg-slate-800 text-white font-black px-3 py-1.5 rounded-xl text-[11px] uppercase">
+                  <i class="fa-solid fa-satellite-dish mr-1"></i> Ejecutar Prueba GPS
+                </button>
+              </div>
+              <div id="geoTestResultBox" class="text-[11px] font-bold text-slate-600">
+                Presiona "Ejecutar Prueba GPS" para medir a qué distancia estás de la estación.
+              </div>
+            </div>
+
+            <!-- DESACTIVAR / ACTIVAR GEOCERCA A UNIDAD O UNIDADES ESPECÍFICAS -->
             <div class="border-t border-slate-200 pt-2.5 space-y-2">
               <label class="block text-[11px] font-black uppercase text-slate-700">
                 Desactivar / Activar Geocerca a Unidad o Unidades Específicas
@@ -474,7 +488,7 @@
             </div>
 
             <button onclick="adminSaveGeofence()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-2.5 rounded-xl text-xs uppercase">
-              Guardar Regla GPS y Unidades en Servidor
+              Guardar Configuración GPS en Servidor
             </button>
           </div>
         </div>
@@ -512,7 +526,7 @@
     const EXTERNAL_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec';
     const FIXED_STATION_LAT = 3.65855;
     const FIXED_STATION_LNG = -76.24802;
-    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v10';
+    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v11';
 
     let currentSession = null;
     let appState = {
@@ -545,6 +559,40 @@
       badge.innerHTML = `<i class="fa-solid ${cfg.icon}"></i>`;
       document.getElementById('activityVisualTitle').textContent = cfg.title;
       document.getElementById('activityVisualSub').textContent = `${cfg.sub} • ${cond.replaceAll('_', ' ')}`;
+    }
+
+    function calculateDistanceMetersLocal(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    async function testGeofenceDistanceNow() {
+      const btn = document.getElementById('btnTestGeoDist');
+      const box = document.getElementById('geoTestResultBox');
+      btn.disabled = true;
+      box.textContent = 'Obteniendo coordenadas GPS actuales...';
+
+      try {
+        const gps = await getFreshGPS();
+        const dist = Math.round(calculateDistanceMetersLocal(gps.lat, gps.lng, FIXED_STATION_LAT, FIXED_STATION_LNG));
+        const radius = Number(document.getElementById('admGeoRadius').value) || 80;
+        const inside = dist <= radius;
+
+        box.innerHTML = inside
+          ? `<span class="text-emerald-800">✅ DENTRO DE GEOCERCA: Estás a <strong>${dist} metros</strong> de la estación (Radio permitido: ${radius} m • Precisión GPS: ±${Math.round(gps.accuracy)} m).</span>`
+          : `<span class="text-red-800">⚠️ FUERA DE GEOCERCA: Estás a <strong>${dist} metros</strong> de la estación (Radio permitido: ${radius} m • Precisión GPS: ±${Math.round(gps.accuracy)} m).</span>`;
+      } catch (err) {
+        box.innerHTML = `<span class="text-red-800">Error GPS: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function callServerApi(payload) {
@@ -702,8 +750,8 @@
         document.getElementById('admGeoRadius').value = appState.geofence.radius;
         document.getElementById('admGeoActive').checked = appState.geofence.active;
         document.getElementById('geoBadge').textContent = unitExempt
-          ? 'Geocerca Desactivada por Admin'
-          : (appState.geofence.active ? `GPS Activo (${appState.geofence.radius}m)` : 'Geocerca Desactivada por Admin');
+          ? 'Geocerca Desactivada por Admon'
+          : (appState.geofence.active ? `GPS Activo (${appState.geofence.radius}m)` : 'Geocerca Desactivada por Admon');
 
         updateEmergencyUI();
         renderTurnoView();
@@ -1236,7 +1284,7 @@
         alert(res.error);
         return;
       }
-      alert('Regla GPS y excepciones por unidad guardadas en el servidor.');
+      alert('Configuración GPS guardada en el servidor.');
       await syncWithServer(true);
     }
 
@@ -1349,7 +1397,7 @@
 
     setInterval(() => {
       if (currentSession && !document.hidden) syncWithServer(false);
-    }, 20000);
+    }, 30000);
 
     window.onload = function () {
       updateActivityFigurePreview();
