@@ -491,7 +491,7 @@
                   <th class="p-2.5">Unidad</th>
                   <th class="p-2.5">Fecha / Horario</th>
                   <th class="p-2.5">Condición / Actividad</th>
-                  <th class="p-2.5">Tiempo</th>
+                  <th class="p-2.5">Tiempo (HH-MM-SS)</th>
                   <th class="p-2.5 text-right">Acciones</th>
                 </tr>
               </thead>
@@ -837,6 +837,18 @@
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
+    }
+
+    function toLocalDatetimeInputValue(dateInput) {
+      if (!dateInput) return '';
+      const d = new Date(dateInput);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hrs = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${day}T${hrs}:${mins}`;
     }
 
     function calculateDistanceMetersLocal(lat1, lon1, lat2, lon2) {
@@ -1351,7 +1363,7 @@
             <div class="font-bold">${t.condicion}</div>
             <div class="text-[11px] text-slate-500">${t.actividad}</div>
           </td>
-          <td class="p-2.5 font-mono font-black text-slate-900">${t.formatoHms || formatSecondsHMS(t.segundos)}</td>
+          <td class="p-2.5 font-mono font-black text-slate-900">${formatSecondsHMS(t.segundos)}</td>
         </tr>
       `).join('');
     }
@@ -1603,7 +1615,7 @@
             <div class="text-[11px] text-slate-500">${t.actividad}</div>
             ${t.observacionAdmin ? `<div class="text-[10px] text-amber-800 font-semibold mt-0.5">${t.observacionAdmin}</div>` : ''}
           </td>
-          <td class="p-2.5 font-mono font-black text-slate-900">${t.formatoHms || formatSecondsHMS(t.segundos)}</td>
+          <td class="p-2.5 font-mono font-black text-slate-900">${formatSecondsHMS(t.segundos)}</td>
           <td class="p-2.5 text-right space-x-1">
             <button onclick="openEditShiftModal('${t.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 px-2 py-1 rounded-lg font-bold text-[11px]">
               <i class="fa-solid fa-pen"></i>
@@ -1630,7 +1642,7 @@
         ACTIVIDAD: t.actividad,
         FECHA_INICIO: new Date(t.inicio).toLocaleString('es-CO'),
         FECHA_FIN: t.fin ? new Date(t.fin).toLocaleString('es-CO') : '',
-        TIEMPO_HH_MM_SS: t.formatoHms || formatSecondsHMS(t.segundos),
+        TIEMPO_HH_MM_SS: formatSecondsHMS(t.segundos),
         AUDITORIA: t.observacionAdmin || ''
       }));
 
@@ -1653,8 +1665,8 @@
       const t = appState.turnos.find(x => x.id === id);
       if (!t) return;
       document.getElementById('editShiftId').value = t.id;
-      document.getElementById('editShiftStart').value = new Date(t.inicio).toISOString().slice(0, 16);
-      document.getElementById('editShiftEnd').value = t.fin ? new Date(t.fin).toISOString().slice(0, 16) : '';
+      document.getElementById('editShiftStart').value = toLocalDatetimeInputValue(t.inicio);
+      document.getElementById('editShiftEnd').value = toLocalDatetimeInputValue(t.fin);
       document.getElementById('editShiftObs').value = '';
       document.getElementById('editShiftModal').classList.remove('hidden');
     }
@@ -1665,14 +1677,21 @@
 
     async function saveEditedShift() {
       const id = document.getElementById('editShiftId').value;
-      const inicio = new Date(document.getElementById('editShiftStart').value).toISOString();
-      const fin = new Date(document.getElementById('editShiftEnd').value).toISOString();
+      const startRaw = document.getElementById('editShiftStart').value;
+      const endRaw = document.getElementById('editShiftEnd').value;
       const observacion = document.getElementById('editShiftObs').value.trim();
 
+      if (!startRaw || !endRaw) {
+        alert('Debes ingresar fecha y hora de inicio y fin.');
+        return;
+      }
       if (!observacion) {
         alert('Debes ingresar el motivo de auditoría.');
         return;
       }
+
+      const inicio = new Date(startRaw).toISOString();
+      const fin = new Date(endRaw).toISOString();
 
       const res = await callServerApi({
         action: 'ADMIN_EDIT_SHIFT',
