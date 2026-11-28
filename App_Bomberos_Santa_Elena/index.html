@@ -88,7 +88,7 @@
 
         <div>
           <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Número de Cédula</label>
-          <input type="text" id="loginCedula" inputmode="numeric" required placeholder="Ej: 16866494"
+          <input type="text" id="loginCedula" inputmode="numeric" required placeholder="Ingresa tu número de cédula"
             class="w-full border-2 border-slate-300 focus:border-red-700 rounded-xl px-4 py-3 text-sm font-bold outline-none select-text">
         </div>
 
@@ -383,6 +383,22 @@
 
       <!-- PESTAÑA 4: ADMINISTRACIÓN (SOLO ROL ADMINISTRADOR — RESPONSIVE SIN CORTES EN MÓVIL) -->
       <section id="TAB_ADMIN" class="hidden space-y-5 w-full">
+
+        <!-- CIERRE DEFINITIVO DE TURNOS ABIERTOS POR OLVIDO (SOLO ADMIN) -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-amber-300 space-y-3 w-full">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black uppercase text-slate-900">
+                <i class="fa-solid fa-clock-rotate-left text-red-700 mr-1"></i> Turnos Abiertos por Olvido
+              </h2>
+              <p class="text-xs text-slate-500">Cierre definitivo inmediato para unidades con turno activo sin cerrar</p>
+            </div>
+            <span id="adminOpenShiftsCount" class="text-[11px] font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900">
+              0 Activos
+            </span>
+          </div>
+          <div id="adminOpenShiftsList" class="space-y-2 text-xs"></div>
+        </div>
 
         <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 space-y-4 w-full">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1091,6 +1107,7 @@
             exemptUnitsDraft = [...(appState.geofence.exemptCedulas || [])];
             exemptInitialized = true;
           }
+          renderAdminOpenShifts();
           renderExemptUnitsManager();
           renderAdminConsolidated();
           renderAdminUsersTable();
@@ -1222,6 +1239,59 @@
       });
       if (!res.ok) {
         alert(res.error);
+        return;
+      }
+      await syncWithServer(true);
+    }
+
+    function renderAdminOpenShifts() {
+      const listEl = document.getElementById('adminOpenShiftsList');
+      const countEl = document.getElementById('adminOpenShiftsCount');
+      if (!listEl || !countEl) return;
+
+      const openShifts = appState.turnos.filter(t => String(t.estado || '').toUpperCase() === 'ACTIVO');
+      countEl.textContent = `${openShifts.length} ${openShifts.length === 1 ? 'Activo' : 'Activos'}`;
+
+      if (openShifts.length === 0) {
+        listEl.innerHTML = '<div class="text-slate-500 italic">No hay turnos abiertos pendientes por cerrar.</div>';
+        return;
+      }
+
+      listEl.innerHTML = openShifts.map(t => {
+        const elapsedSec = Math.max(0, Math.floor((Date.now() - new Date(t.inicio).getTime()) / 1000));
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-2xl bg-amber-50/70 border border-amber-300">
+            <div class="min-w-0">
+              <div class="font-black text-slate-900 truncate">${t.nombre} <span class="text-slate-500 font-bold">(CC: ${t.cedula})</span></div>
+              <div class="text-[11px] text-slate-600">
+                ${t.rango || '-'} • ${t.condicion} • Inicio: ${new Date(t.inicio).toLocaleString('es-CO')} • Transcurrido: <strong class="font-mono">${formatSecondsHMS(elapsedSec)}</strong>
+              </div>
+            </div>
+            <button type="button" onclick="adminForceCloseShift('${t.id}', '${String(t.nombre || '').replace(/'/g, "\\'")}')"
+              class="bg-red-700 hover:bg-red-800 text-white font-black px-3.5 py-2 rounded-xl text-xs uppercase shrink-0 shadow">
+              <i class="fa-solid fa-square-check mr-1"></i> Cierre Definitivo
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function adminForceCloseShift(shiftId, unitName) {
+      if (String(currentSession?.user?.rol || '').toUpperCase() !== 'ADMINISTRADOR') {
+        alert('Solo el ADMINISTRADOR puede ejecutar cierres definitivos.');
+        return;
+      }
+      if (!confirm(`¿Dar cierre definitivo por olvido al turno activo de ${unitName}?`)) return;
+
+      const res = await callServerApi({
+        action: 'END_SHIFT',
+        token: currentSession.token,
+        id: shiftId,
+        forceCloseByAdmin: true,
+        reason: 'CIERRE DEFINITIVO POR OLVIDO (ADMINISTRADOR)'
+      });
+      if (!res.ok) {
+        alert(res.error || 'No se pudo cerrar el turno.');
         return;
       }
       await syncWithServer(true);
