@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CBV Santa Elena - Control de Guardia y Horas</title>
+  <link id="dynamicFavicon" rel="icon" type="image/png" href="./icon-192.png">
+  <link id="dynamicAppleTouchIcon" rel="apple-touch-icon" href="./icon-192.png">
+  <link id="dynamicManifestLink" rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#b91c1c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <style>
+    html {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      overflow-x: clip;
+      width: 100%;
+      margin: 0;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    h1, h2, .font-title { font-family: 'Montserrat', sans-serif; }
+    @keyframes sirenFlash {
+      0%, 100% { background-color: #991b1b; }
+      50% { background-color: #dc2626; }
+    }
+    .siren-active-banner { animation: sirenFlash 0.85s infinite; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-900 pb-12 select-none">
+
+  <!-- MOTOR DE AUDIO HTML5 PARA SIRENA (COMPATIBLE CON iOS Y ANDROID) -->
+  <audio id="sirenAudioEl" loop playsinline preload="auto"></audio>
+
+  <!-- BANNER DE EMERGENCIA ACTIVA (SOLO EN DISPOSITIVOS DE UNIDADES / ADMIN) -->
+  <div id="emergencyBanner" class="hidden siren-active-banner text-white px-4 py-3 shadow-xl border-b-4 border-amber-400 sticky top-0 z-50 w-full">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <span id="emergencyBannerEmoji" class="text-2xl animate-bounce shrink-0">🚨</span>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-black uppercase tracking-wider text-amber-300">ALERTA DE EMERGENCIA ACTIVA</div>
+          <div id="emergencyBannerText" class="text-sm font-extrabold break-words">INCENDIO / EMERGENCIA EN CURSO</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+        <button onclick="unlockAndPlaySiren()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black px-3 py-2 rounded-xl">
+          <i class="fa-solid fa-volume-high mr-1"></i> Sonar Sirena
+        </button>
+        <button onclick="manualMuteSiren()" class="bg-slate-950/75 hover:bg-slate-950 text-white text-xs font-extrabold px-3 py-2 rounded-xl border border-white/20">
+          <i class="fa-solid fa-volume-xmark mr-1"></i> Silenciar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE INICIO DE SESIÓN -->
+  <div id="loginView" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-red-950 via-red-800 to-slate-900 w-full">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-amber-400">
+      <div class="bg-gradient-to-r from-red-900 via-red-700 to-red-900 text-white p-6 text-center border-b-4 border-amber-400">
+        <img src="./icon-192.png" onerror="this.style.display='none'" alt="Escudo CBV" class="w-20 h-20 mx-auto rounded-full bg-white p-1 border-2 border-amber-400 shadow-lg mb-3">
+        <span class="inline-block bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-0.5 rounded-full uppercase tracking-wider">
+          Fundado en 1988 • C.B.V.
+        </span>
+        <h1 class="text-xl font-black uppercase mt-2 leading-tight">
+          Bomberos Voluntarios<br>Santa Elena - Valle del Cauca
+        </h1>
+        <p class="text-xs text-amber-200 font-semibold mt-1">Control Oficial de Guardia, Horas y Despacho</p>
+      </div>
+
+      <form onsubmit="handleSecureLogin(event)" class="p-6 space-y-4">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-[11px] text-emerald-900 font-semibold flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-700 text-sm"></i>
+          <span>Autenticación verificada en servidor con cifrado SHA-256</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Número de Cédula</label>
+          <input type="text" id="loginCedula" inputmode="numeric" required placeholder="Ingresa tu número de cédula"
+            class="w-full border-2 border-slate-300 focus:border-red-700 rounded-xl px-4 py-3 text-sm font-bold outline-none select-text">
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">PIN Personal</label>
+          <input type="password" id="loginPin" inputmode="numeric" required placeholder="••••"
+            class="w-full border-2 border-slate-300 focus:border-red-700 rounded-xl px-4 py-3 text-sm font-bold tracking-widest outline-none select-text">
+        </div>
+
+        <div id="loginErrorBox" class="hidden bg-red-50 border-2 border-red-300 text-red-800 text-xs font-bold p-3 rounded-xl"></div>
+
+        <button type="submit" id="btnLoginSubmit"
+          class="w-full bg-red-700 hover:bg-red-800 text-white font-black uppercase py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Ingresar al Sistema</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CAMBIO DE PIN CON BOTÓN CANCELAR -->
+  <div id="forcePinModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-amber-400 shadow-2xl space-y-4">
+      <div class="text-center">
+        <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl mb-2">
+          <i class="fa-solid fa-key"></i>
+        </div>
+        <h3 class="text-lg font-black uppercase text-slate-900">Cambiar PIN Personal</h3>
+        <p class="text-xs text-slate-600 mt-1">Define un PIN privado de 4 a 6 dígitos o presiona Cancelar para volver.</p>
+      </div>
+      <input type="password" id="newPersonalPin" inputmode="numeric" maxlength="6" placeholder="Nuevo PIN (4-6 dígitos)"
+        class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-center font-black tracking-widest text-base select-text">
+      <input type="password" id="confirmPersonalPin" inputmode="numeric" maxlength="6" placeholder="Confirma tu nuevo PIN"
+        class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-center font-black tracking-widest text-base select-text">
+      <div id="pinChangeMsg" class="hidden text-xs font-bold text-red-700 text-center"></div>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeOwnPinModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-black py-3 rounded-xl uppercase text-xs">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Cancelar
+        </button>
+        <button type="button" onclick="submitNewOwnPin()" class="flex-1 bg-red-700 hover:bg-red-800 text-white font-black py-3 rounded-xl uppercase text-xs">
+          Guardar PIN
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CLAVE ADMINISTRADOR PARA SALIR DE CENTRAL -->
+  <div id="centralUnlockModal" class="hidden fixed inset-0 bg-slate-950/85 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-red-700 shadow-2xl space-y-4">
+      <div class="text-center">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-700 flex items-center justify-center mx-auto text-xl mb-2">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h3 class="text-base font-black uppercase text-slate-900">Salida Protegida de Central</h3>
+        <p class="text-xs text-slate-600 mt-1">Ingresa la clave/PIN de Administrador para salir de la consola de Central.</p>
+      </div>
+      <input type="password" id="centralAdminPinInput" inputmode="numeric" placeholder="Clave de Administrador"
+        class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 text-center font-black tracking-widest text-sm select-text">
+      <div id="centralUnlockError" class="hidden text-xs font-bold text-red-700 text-center"></div>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeCentralUnlockModal()" class="flex-1 bg-slate-200 text-slate-800 font-black py-2.5 rounded-xl uppercase text-xs">
+          Cancelar
+        </button>
+        <button type="button" onclick="confirmCentralAdminUnlock()" class="flex-1 bg-red-700 text-white font-black py-2.5 rounded-xl uppercase text-xs">
+          Autorizar Salida
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APLICACIÓN PRINCIPAL -->
+  <div id="appShell" class="hidden w-full">
+    <header class="bg-gradient-to-r from-red-900 via-red-700 to-red-900 text-white shadow-lg border-b-4 border-amber-400 w-full relative z-30">
+      <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img src="./icon-192.png" onerror="this.style.display='none'" class="w-11 h-11 rounded-full bg-white p-0.5 border-2 border-amber-400 shrink-0 object-contain">
+            <div class="min-w-0">
+              <div class="text-[10px] font-black uppercase text-amber-300 tracking-wider truncate">C.B.V. Santa Elena</div>
+              <div id="headerUserName" class="text-xs sm:text-sm font-black leading-tight truncate">UNIDAD BOMBERIL</div>
+              <div id="headerUserMeta" class="text-[10px] sm:text-[11px] text-amber-100 truncate">Rango • Rol</div>
+            </div>
+          </div>
+          <div id="headerActionButtons" class="flex items-center gap-1.5 shrink-0">
+            <button onclick="syncWithServer(true)" title="Sincronizar datos" class="bg-white/15 hover:bg-white/25 text-white font-bold px-2.5 py-2 rounded-xl text-xs">
+              <i id="btnRefreshIcon" class="fa-solid fa-rotate"></i>
+            </button>
+            <button id="btnHeaderPin" onclick="openOwnPinModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-2.5 py-2 rounded-xl text-xs">
+              <i class="fa-solid fa-key"></i> Mi PIN
+            </button>
+            <button id="btnHeaderLogout" onclick="logoutUser()" class="bg-black/40 hover:bg-black/60 text-white font-bold px-2.5 py-2 rounded-xl text-xs border border-white/20">
+              <i class="fa-solid fa-right-from-bracket text-amber-300"></i> Salir
+            </button>
+          </div>
+        </div>
+
+        <nav id="mainNavGrid" class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15">
+          <button onclick="switchTab('TAB_TURNO')" id="btnTabTurno" class="py-2 px-2 rounded-xl text-xs font-black bg-white text-red-800">
+            <i class="fa-solid fa-clock mr-1"></i>Turno
+          </button>
+          <button onclick="switchTab('TAB_MIS_HORAS')" id="btnTabMisHoras" class="py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
+            <i class="fa-solid fa-list-check mr-1"></i>Mis Horas
+          </button>
+          <button onclick="switchTab('TAB_ADMIN')" id="btnTabAdmin" class="hidden py-2 px-2 rounded-xl text-xs font-black bg-red-950/50 text-white">
+            <i class="fa-solid fa-shield-halved mr-1"></i>Admin
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-3 sm:px-4 mt-4 space-y-4 w-full">
+
+      <!-- PESTAÑA 1: TURNO -->
+      <section id="TAB_TURNO" class="space-y-4 w-full">
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 space-y-4 w-full">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black uppercase text-slate-900">Control de Guardia</h2>
+              <p class="text-xs text-slate-500">Estación Santa Elena • Calle 4 6A-4</p>
+            </div>
+            <span id="geoBadge" class="text-[11px] font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
+              GPS Verificado
+            </span>
+          </div>
+
+          <div id="activeShiftCard" class="hidden bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black uppercase text-emerald-800">● Turno Activo en Curso</span>
+              <span id="liveShiftTimer" class="font-mono text-xl font-black text-emerald-950">00-00-00</span>
+            </div>
+            <div id="activeShiftDetails" class="text-xs text-slate-700 font-semibold"></div>
+            <button onclick="endCurrentShift()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-3 rounded-xl uppercase text-xs shadow">
+              <i class="fa-solid fa-stop mr-1"></i> Finalizar Turno y Guardar Horas
+            </button>
+          </div>
+
+          <div id="startShiftForm" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
+                  <i class="fa-solid fa-user-check text-red-700 mr-1"></i> Disponibilidad / Condición
+                </label>
+                <select id="shiftCondition" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                  <option value="DISPONIBLE">🟢 DISPONIBLE EN ESTACIÓN</option>
+                  <option value="COMANDANTE DE GUARDIA">🟡 COMANDANTE DE GUARDIA</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">
+                  <i class="fa-solid fa-shapes text-red-700 mr-1"></i> Actividad Principal
+                </label>
+                <select id="shiftActivity" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                  <option value="GUARDIA ORDINARIA">🛡️ GUARDIA ORDINARIA</option>
+                  <option value="ATENCION DE EMERGENCIA">🚨 ATENCIÓN DE EMERGENCIA</option>
+                  <option value="CAPACITACION / ENTRENAMIENTO">🎓 CAPACITACIÓN / ENTRENAMIENTO</option>
+                  <option value="MANTENIMIENTO MAQUINAS Y EQUIPO">🔧 MANTENIMIENTO MÁQUINAS Y EQUIPO</option>
+                  <option value="SERVICIO FUERA DE ESTACION">🚒 SERVICIO FUERA DE ESTACIÓN</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="startNewShift()" id="btnStartShift"
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-xl uppercase text-xs shadow-lg flex items-center justify-center gap-2">
+              <i class="fa-solid fa-clock"></i>
+              <span>Activar turno</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 w-full">
+          <h3 class="text-sm font-black uppercase text-slate-900 mb-3">
+            <i class="fa-solid fa-users text-red-700 mr-1"></i> Unidades Activas en Guardia Ahora
+          </h3>
+          <div id="activePersonnelList" class="space-y-2 text-xs"></div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 2: MIS HORAS -->
+      <section id="TAB_MIS_HORAS" class="hidden space-y-4 w-full">
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 w-full">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h2 class="text-base font-black uppercase text-slate-900">Mi Historial de Horas</h2>
+            <div class="bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl text-right">
+              <div class="text-[10px] font-extrabold uppercase text-red-700">Mi Acumulado Total</div>
+              <div id="myTotalHoursBadge" class="font-mono text-sm font-black text-red-900">00-00-00</div>
+            </div>
+          </div>
+          <div class="overflow-x-auto w-full">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 uppercase font-black">
+                <tr>
+                  <th class="p-2.5">Fecha</th>
+                  <th class="p-2.5">Disponibilidad / Actividad</th>
+                  <th class="p-2.5">Duración (HH-MM-SS)</th>
+                </tr>
+              </thead>
+              <tbody id="myHoursTableBody" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 3: CENTRAL DE EMERGENCIA DEDICADA (SOLO ROL CENTRAL — SIN SONIDO LOCAL) -->
+      <section id="TAB_CENTRAL" class="hidden space-y-4 w-full">
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-4 border-red-700 space-y-4 w-full">
+          <div>
+            <span class="bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+              Central de Emergencia • Protegida con Clave Admon
+            </span>
+            <h2 class="text-lg font-black uppercase text-slate-900 mt-1">
+              <i class="fa-solid fa-tower-broadcast text-red-700 mr-1"></i> Despacho de Emergencia
+            </h2>
+          </div>
+
+          <div>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 mb-2">Selecciona el Tipo de Emergencia</label>
+            <input type="hidden" id="emergType" value="INCENDIO ESTRUCTURAL">
+            <input type="hidden" id="emergEmoji" value="🔥">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="emergencyTypeGrid">
+              <button type="button" onclick="selectEmergencyType('INCENDIO ESTRUCTURAL', '🔥', this)"
+                class="emerg-card-btn border-2 border-red-700 bg-red-50 rounded-2xl p-3 text-left flex items-center gap-2.5 shadow-sm w-full">
+                <span class="text-2xl shrink-0">🔥</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">INCENDIO ESTRUCTURAL</div>
+                  <div class="text-[10px] text-slate-500">Vivienda / Local</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('INCENDIO FORESTAL / CAÑADUZAL', '🌾', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5 w-full">
+                <span class="text-2xl shrink-0">🌾</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">INCENDIO FORESTAL</div>
+                  <div class="text-[10px] text-slate-500">Cañaduzal / Vegetal</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('ACCIDENTE DE TRANSITO', '🚗', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5 w-full">
+                <span class="text-2xl shrink-0">🚗</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">ACCIDENTE TRÁNSITO</div>
+                  <div class="text-[10px] text-slate-500">Colisión / Vehicular</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('EMERGENCIA MEDICA / RESCATE', '🚑', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5 w-full">
+                <span class="text-2xl shrink-0">🚑</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">EMERGENCIA MÉDICA</div>
+                  <div class="text-[10px] text-slate-500">Atención / Rescate</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="selectEmergencyType('FUGA DE GAS / MATERIALES PELIGROSOS', '☣️', this)"
+                class="emerg-card-btn border-2 border-slate-200 bg-white hover:bg-slate-50 rounded-2xl p-3 text-left flex items-center gap-2.5 w-full">
+                <span class="text-2xl shrink-0">☣️</span>
+                <div>
+                  <div class="text-[11px] font-black text-slate-900 leading-tight">FUGA GAS / MATPEL</div>
+                  <div class="text-[10px] text-slate-500">Químico / Cilindro</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Dirección / Detalle de lo Sucedido</label>
+            <input type="text" id="emergLocation" placeholder="Ej: Calle 4 con Cra 7, Santa Elena — Vivienda en llamas"
+              class="w-full border-2 border-slate-300 focus:border-red-700 rounded-xl px-4 py-3 text-xs font-bold outline-none select-text">
+          </div>
+
+          <button onclick="triggerEmergencyState(true)" id="btnActivateSiren"
+            class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-5 px-4 rounded-2xl uppercase text-base shadow-xl flex items-center justify-center gap-3">
+            <i class="fa-solid fa-bullhorn text-xl"></i>
+            <span>Activar Sirena / Emergencia</span>
+          </button>
+
+          <button onclick="triggerEmergencyState(false)" id="btnDeactivateSirenLarge"
+            class="hidden w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-4 px-4 rounded-2xl uppercase text-sm shadow-lg border-2 border-slate-900 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bell-slash text-lg"></i>
+            <span id="btnDeactivateSirenLabel">Desactivar Alarma (Auto-apagado en 60s)</span>
+          </button>
+
+          <button onclick="shareEmergencyWhatsApp()"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-4 rounded-2xl uppercase text-sm shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-brands fa-whatsapp text-lg"></i>
+            <span>Enviar Reporte a Grupo WhatsApp</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 4: ADMINISTRACIÓN (SOLO ROL ADMINISTRADOR — RESPONSIVE SIN CORTES EN MÓVIL) -->
+      <section id="TAB_ADMIN" class="hidden space-y-5 w-full">
+
+        <!-- CIERRE DEFINITIVO DE TURNOS ABIERTOS POR OLVIDO (SOLO ADMIN) -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-amber-300 space-y-3 w-full">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black uppercase text-slate-900">
+                <i class="fa-solid fa-clock-rotate-left text-red-700 mr-1"></i> Turnos Abiertos por Olvido
+              </h2>
+              <p class="text-xs text-slate-500">Cierre definitivo inmediato para unidades con turno activo sin cerrar</p>
+            </div>
+            <span id="adminOpenShiftsCount" class="text-[11px] font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900">
+              0 Activos
+            </span>
+          </div>
+          <div id="adminOpenShiftsList" class="space-y-2 text-xs"></div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 space-y-4 w-full">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black uppercase text-slate-900">Consolidado de Horas por Unidad</h2>
+              <p class="text-xs text-slate-500">Busca por nombre o cédula y filtra por rango de fechas</p>
+            </div>
+            <button onclick="exportFilteredShiftsExcel()"
+              class="bg-emerald-700 hover:bg-emerald-800 text-white font-black px-4 py-2.5 rounded-xl text-xs uppercase shadow self-start">
+              <i class="fa-solid fa-file-excel mr-1"></i> Exportar Excel Filtrado
+            </button>
+          </div>
+
+          <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 sm:p-4 space-y-3 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div class="md:col-span-6 relative">
+                <label class="block text-[11px] font-black uppercase text-slate-700 mb-1">
+                  <i class="fa-solid fa-magnifying-glass text-red-700 mr-1"></i> Buscar Unidad (Nombre o Cédula)
+                </label>
+                <div class="relative flex items-center">
+                  <input type="text" id="unitSearchInput" autocomplete="off"
+                    oninput="handleUnitSearchInput(this.value)"
+                    onfocus="handleUnitSearchInput(this.value)"
+                    placeholder="Escribe nombre, apellido o cédula..."
+                    class="w-full bg-white border-2 border-slate-300 focus:border-red-700 rounded-xl pl-3 pr-9 py-2.5 text-xs font-bold outline-none select-text">
+                  <button type="button" id="btnClearUnitSearch" onclick="clearSelectedUnit()"
+                    class="hidden absolute right-2.5 text-slate-400 hover:text-red-700 text-sm">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                  </button>
+                </div>
+                <div id="unitSuggestionsBox" class="hidden absolute left-0 right-0 mt-1 bg-white border-2 border-slate-300 rounded-xl shadow-xl max-h-52 overflow-y-auto z-30 divide-y divide-slate-100"></div>
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-[11px] font-black uppercase text-slate-700 mb-1">Fecha Desde</label>
+                <input type="date" id="filterDateFrom" onchange="renderAdminConsolidated()"
+                  class="w-full bg-white border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-[11px] font-black uppercase text-slate-700 mb-1">Fecha Hasta</label>
+                <input type="date" id="filterDateTo" onchange="renderAdminConsolidated()"
+                  class="w-full bg-white border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" onclick="setQuickDateFilter('TODAY')" class="bg-white hover:bg-slate-200 border border-slate-300 text-slate-800 text-[11px] font-extrabold px-2.5 py-1 rounded-lg">Hoy</button>
+                <button type="button" onclick="setQuickDateFilter('WEEK')" class="bg-white hover:bg-slate-200 border border-slate-300 text-slate-800 text-[11px] font-extrabold px-2.5 py-1 rounded-lg">Esta Semana</button>
+                <button type="button" onclick="setQuickDateFilter('MONTH')" class="bg-white hover:bg-slate-200 border border-slate-300 text-slate-800 text-[11px] font-extrabold px-2.5 py-1 rounded-lg">Este Mes</button>
+                <button type="button" onclick="setQuickDateFilter('ALL')" class="bg-white hover:bg-slate-200 border border-slate-300 text-slate-800 text-[11px] font-extrabold px-2.5 py-1 rounded-lg">Todas las Fechas</button>
+              </div>
+              <div id="activeFilterLabel" class="text-[11px] font-bold text-slate-600 break-words">
+                Mostrando registros generales (selecciona una unidad para ver su consolidado de horas)
+              </div>
+            </div>
+          </div>
+
+          <div id="individualUnitSummaryCard" class="hidden bg-gradient-to-r from-red-900 via-red-800 to-slate-900 text-white rounded-2xl p-4 border-2 border-amber-400 shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span class="bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                  Consolidado Individual de Unidad
+                </span>
+                <h3 id="summaryUnitName" class="text-base font-black uppercase mt-1 break-words">NOMBRE DE LA UNIDAD</h3>
+                <p id="summaryUnitMeta" class="text-xs text-amber-200 break-words">Cédula • Rango • Periodo</p>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-black/35 rounded-xl px-2.5 py-2 border border-white/15">
+                  <div class="text-[10px] uppercase text-amber-300 font-bold">Total Horas</div>
+                  <div id="summaryUnitTotalHms" class="font-mono text-sm sm:text-base font-black text-white">00-00-00</div>
+                </div>
+                <div class="bg-black/35 rounded-xl px-2.5 py-2 border border-white/15">
+                  <div class="text-[10px] uppercase text-amber-300 font-bold">Turnos</div>
+                  <div id="summaryUnitCount" class="text-sm sm:text-base font-black text-white">0</div>
+                </div>
+                <div class="bg-black/35 rounded-xl px-2.5 py-2 border border-white/15">
+                  <div class="text-[10px] uppercase text-amber-300 font-bold">Cmdte. Guardia</div>
+                  <div id="summaryUnitCmdHms" class="font-mono text-xs font-black text-emerald-300 mt-1">00-00-00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto w-full">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 uppercase font-black">
+                <tr>
+                  <th class="p-2.5">Unidad</th>
+                  <th class="p-2.5">Fecha / Horario</th>
+                  <th class="p-2.5">Condición / Actividad</th>
+                  <th class="p-2.5">Tiempo</th>
+                  <th class="p-2.5 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="adminConsolidatedTableBody" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+          <!-- UNIDAD, ROL Y RESTABLECER PIN -->
+          <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 space-y-3 w-full">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-black uppercase text-slate-900">
+                <i class="fa-solid fa-user-gear text-red-700 mr-1"></i> Unidad, Rol y Restablecer PIN
+              </h3>
+              <button type="button" onclick="clearUserForm()" class="text-[11px] font-bold text-slate-500 hover:text-red-700">
+                Limpiar formulario
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" id="admUserCedula" placeholder="Cédula" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold select-text">
+              <input type="text" id="admUserPin" placeholder="Nuevo PIN (ej. 1234)" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold select-text">
+            </div>
+            <input type="text" id="admUserName" placeholder="Nombre completo" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold uppercase select-text">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" id="admUserRank" placeholder="Rango (ej. BOMBERO)" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold uppercase select-text">
+              <select id="admUserRole" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold">
+                <option value="DIGITADOR">DIGITADOR</option>
+                <option value="CENTRAL_EMERGENCIA">CENTRAL_EMERGENCIA</option>
+                <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+              </select>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700 pt-1">
+              <label class="flex items-center gap-1.5">
+                <input type="checkbox" id="admUserActive" checked class="w-4 h-4"> Unidad Activa
+              </label>
+              <label class="flex items-center gap-1.5">
+                <input type="checkbox" id="admUserForcePin" checked class="w-4 h-4"> Exigir cambio al entrar
+              </label>
+            </div>
+            <button onclick="adminSaveUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-xl text-xs uppercase">
+              Guardar Cambios de Unidad / PIN / Rol
+            </button>
+          </div>
+
+          <!-- GEOCERCA DE ESTACIÓN -->
+          <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 space-y-3 w-full">
+            <h3 class="text-sm font-black uppercase text-slate-900">
+              <i class="fa-solid fa-location-dot text-red-700 mr-1"></i> Geocerca de Estación (Solo Admon)
+            </h3>
+            <p class="text-xs text-slate-600 break-words">Coordenadas fijas: <strong>3.65855, -76.24802</strong> (Calle 4 6A-4, Santa Elena).</p>
+            <div class="flex flex-wrap items-center gap-3">
+              <label class="text-xs font-extrabold">Radio (m):</label>
+              <input type="number" id="admGeoRadius" value="80" min="30" max="500" class="w-24 border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold select-text">
+              <label class="flex items-center gap-1.5 text-xs font-extrabold">
+                <input type="checkbox" id="admGeoActive" checked class="w-4 h-4"> Activar Geocerca
+              </label>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 w-full">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[11px] font-black uppercase text-slate-700">Prueba de Distancia GPS</span>
+                <button type="button" onclick="testGeofenceDistanceNow()" id="btnTestGeoDist"
+                  class="bg-slate-900 hover:bg-slate-800 text-white font-black px-3 py-2 rounded-xl text-[11px] uppercase">
+                  <i class="fa-solid fa-satellite-dish mr-1"></i> Ejecutar Prueba GPS
+                </button>
+              </div>
+              <div id="geoTestResultBox" class="text-[11px] font-bold text-slate-600 break-words">
+                Presiona "Ejecutar Prueba GPS" para medir a qué distancia estás de la estación.
+              </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-2.5 space-y-2 w-full">
+              <label class="block text-[11px] font-black uppercase text-slate-700">
+                Excepción de Geocerca por Unidad (Quitar o Agregar)
+              </label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <select id="admExemptUnitSelect" class="w-full sm:flex-1 border-2 border-slate-300 rounded-xl px-2.5 py-2.5 text-xs font-bold"></select>
+                <button type="button" onclick="toggleUnitGeofenceExemption()" class="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-2.5 rounded-xl text-xs uppercase shrink-0">
+                  Agregar / Quitar
+                </button>
+              </div>
+              <div id="exemptUnitsChips" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
+            </div>
+
+            <button onclick="adminSaveGeofence()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-3 rounded-xl text-xs uppercase">
+              Guardar Configuración GPS en Servidor
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-slate-200 space-y-3 w-full">
+          <h3 class="text-sm font-black uppercase text-slate-900">
+            <i class="fa-solid fa-users-gear text-red-700 mr-1"></i> Personal Registrado (Editar Rol / Restablecer PIN)
+          </h3>
+          <div class="overflow-x-auto w-full">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 uppercase font-black">
+                <tr>
+                  <th class="p-2.5">Cédula / Nombre</th>
+                  <th class="p-2.5">Rango</th>
+                  <th class="p-2.5">Rol</th>
+                  <th class="p-2.5">Estado</th>
+                  <th class="p-2.5 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL EDICIÓN DE HORAS CON AUDITORÍA -->
+  <div id="editShiftModal" class="hidden fixed inset-0 bg-slate-950/75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 border-4 border-red-700 shadow-2xl space-y-3">
+      <h3 class="text-base font-black uppercase text-slate-900">Corregir Registro de Turno</h3>
+      <input type="hidden" id="editShiftId">
+      <div>
+        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Inicio (Fecha y Hora)</label>
+        <input type="datetime-local" id="editShiftStart" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+      </div>
+      <div>
+        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Fin (Fecha y Hora)</label>
+        <input type="datetime-local" id="editShiftEnd" class="w-full border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+      </div>
+      <div>
+        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Motivo de Corrección (Obligatorio)</label>
+        <input type="text" id="editShiftObs" placeholder="Ej: Olvidó cerrar turno al salir de guardia"
+          class="w-full border-2 border-slate-300 rounded-xl px-3 py-2 text-xs font-bold select-text">
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeEditShiftModal()" class="flex-1 bg-slate-200 text-slate-800 font-black py-2.5 rounded-xl text-xs uppercase">Cancelar</button>
+        <button onclick="saveEditedShift()" class="flex-1 bg-red-700 text-white font-black py-2.5 rounded-xl text-xs uppercase">Guardar Cambio</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const EXTERNAL_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQvXeiYO3KmDhqx1Q25qZNStOVQ_J87v16Rqexa7_4vIIvJLlG3vWzjIhXk-4drO7BQ/exec';
+    const FIXED_STATION_LAT = 3.65855;
+    const FIXED_STATION_LNG = -76.24802;
+    const STORAGE_KEY_SESSION = 'cbv_santa_elena_secure_session_v18';
+    const EMERGENCY_AUTO_OFF_SEC = 60;
+
+    let currentSession = null;
+    let appState = {
+      geofence: { active: true, lat: FIXED_STATION_LAT, lng: FIXED_STATION_LNG, radius: 80, exemptCedulas: [] },
+      emergency: { active: false },
+      personal: [],
+      turnos: []
+    };
+
+    let selectedUnitCedula = '';
+    let exemptUnitsDraft = [];
+    let exemptInitialized = false;
+    let isSyncingNow = false;
+    let autoClosingOnExit = false;
+
+    // CONTROL DE AUDIO PRO (HTML5 WAV + WEBAUDIO)
+    let sirenAudioCtx = null;
+    let sirenInterval = null;
+    let sirenWavUrl = null;
+    let audioUnlocked = false;
+    let mutedEmergencyTs = '';
+    let autoOffHandledForTs = '';
+    let lastNotifiedEmergencyTs = '';
+    let wakeLockSentinel = null;
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(() => {});
+      });
+    }
+
+    // GENERA UN ARCHIVO WAV REAL DE SIRENA DE BOMBEROS EN MEMORIA (REPRODUCE INCLUSO CON SWITCH DE SILENCIO EN iOS)
+    function buildSirenWavBlobUrl() {
+      if (sirenWavUrl) return sirenWavUrl;
+      const sampleRate = 22050;
+      const durationSec = 1.6;
+      const numSamples = Math.floor(sampleRate * durationSec);
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+
+      function writeStr(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, numSamples * 2, true);
+
+      let phase = 0;
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const cycle = (t % 0.8) / 0.8;
+        const freq = cycle < 0.5 ? (660 + cycle * 2 * 440) : (1100 - (cycle - 0.5) * 2 * 440);
+        phase += (2 * Math.PI * freq) / sampleRate;
+        const sample = Math.sin(phase) * 0.7 + Math.sin(phase * 2) * 0.25;
+        const clamped = Math.max(-1, Math.min(1, sample));
+        view.setInt16(44 + i * 2, clamped * 32767, true);
+      }
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      sirenWavUrl = URL.createObjectURL(blob);
+      return sirenWavUrl;
+    }
+
+    function initSirenAudioElement() {
+      const el = document.getElementById('sirenAudioEl');
+      if (el && !el.src) {
+        el.src = buildSirenWavBlobUrl();
+        el.load();
+      }
+      return el;
+    }
+
+    function isCentralUser(rol) {
+      const r = String(rol || '').toUpperCase().trim();
+      return r === 'CENTRAL' || r === 'CENTRAL_EMERGENCIA' || r === 'CENTRAL DE EMERGENCIA';
+    }
+
+    async function requestScreenWakeLock() {
+      try {
+        if ('wakeLock' in navigator && !wakeLockSentinel && !document.hidden) {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
+        }
+      } catch (e) {}
+    }
+
+    async function requestNotificationPermissionIfNeeded() {
+      try {
+        if ('Notification' in window && Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+      } catch (e) {}
+    }
+
+    function triggerDeviceVibration() {
+      try {
+        if ('vibrate' in navigator) {
+          navigator.vibrate([700, 250, 700, 250, 1000]);
+        }
+      } catch (e) {}
+    }
+
+    function fireSystemEmergencyAlert(em) {
+      if (!em || !em.timestamp || lastNotifiedEmergencyTs === em.timestamp) return;
+      lastNotifiedEmergencyTs = em.timestamp;
+      triggerDeviceVibration();
+
+      const title = `${em.emoji || '🚨'} ALARMA CBV SANTA ELENA: ${em.type || 'EMERGENCIA'}`;
+      const body = `${em.location || 'Jurisdicción Santa Elena'} • Despacha: ${em.by || 'Central'}`;
+
+      try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then(reg => {
+              reg.showNotification(title, {
+                body,
+                icon: './icon-192.png',
+                badge: './icon-192.png',
+                vibrate: [700, 250, 700, 250, 1000],
+                tag: 'cbv-emergency-alert',
+                renotify: true
+              }).catch(() => {});
+            }).catch(() => {});
+          } else {
+            new Notification(title, { body, icon: './icon-192.png' });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // DESBLOQUEO SILENCIOSO DE AUDIO EN EL PRIMER TOQUE DEL USUARIO (iOS + ANDROID)
+    function preUnlockAudioEngine() {
+      requestScreenWakeLock();
+      requestNotificationPermissionIfNeeded();
+
+      try {
+        if (!sirenAudioCtx) {
+          sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+          sirenAudioCtx.resume().catch(() => {});
+        }
+      } catch (e) {}
+
+      if (!audioUnlocked) {
+        audioUnlocked = true;
+        try {
+          const el = initSirenAudioElement();
+          if (el) {
+            el.muted = true;
+            const p = el.play();
+            if (p && typeof p.then === 'function') {
+              p.then(() => {
+                el.pause();
+                el.currentTime = 0;
+                el.muted = false;
+                if (appState.emergency && appState.emergency.active && currentSession && !isCentralUser(currentSession.user?.rol) && mutedEmergencyTs !== appState.emergency.timestamp) {
+                  startLocalSirenSound();
+                }
+              }).catch(() => {
+                el.muted = false;
+                audioUnlocked = false;
+              });
+            }
+          }
+        } catch (e) {
+          audioUnlocked = false;
+        }
+      } else if (appState.emergency && appState.emergency.active && currentSession && !isCentralUser(currentSession.user?.rol) && mutedEmergencyTs !== appState.emergency.timestamp) {
+        startLocalSirenSound();
+      }
+    }
+
+    ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(evt => {
+      document.addEventListener(evt, preUnlockAudioEngine, { passive: true });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && currentSession) {
+        requestScreenWakeLock();
+        pollEmergencyFast();
+      }
+    });
+
+    function toLocalYMD(dateInput) {
+      const d = new Date(dateInput);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function calculateDistanceMetersLocal(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    async function testGeofenceDistanceNow() {
+      const btn = document.getElementById('btnTestGeoDist');
+      const box = document.getElementById('geoTestResultBox');
+      btn.disabled = true;
+      box.textContent = 'Obteniendo coordenadas GPS actuales...';
+
+      try {
+        const gps = await getFreshGPS();
+        const dist = Math.round(calculateDistanceMetersLocal(gps.lat, gps.lng, FIXED_STATION_LAT, FIXED_STATION_LNG));
+        const radius = Number(document.getElementById('admGeoRadius').value) || 80;
+        const inside = dist <= radius;
+
+        box.innerHTML = inside
+          ? `<span class="text-emerald-800">✅ DENTRO DE GEOCERCA: Estás a <strong>${dist} metros</strong> de la estación (Radio permitido: ${radius} m • Precisión GPS: ±${Math.round(gps.accuracy)} m).</span>`
+          : `<span class="text-red-800">⚠️ FUERA DE GEOCERCA: Estás a <strong>${dist} metros</strong> de la estación (Radio permitido: ${radius} m • Precisión GPS: ±${Math.round(gps.accuracy)} m).</span>`;
+      } catch (err) {
+        box.innerHTML = `<span class="text-red-800">Error GPS: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function callServerApi(payload, useKeepalive = false) {
+      const res = await fetch(EXTERNAL_GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        keepalive: useKeepalive
+      });
+      const data = await res.json();
+      if (data.authExpired) {
+        clearSessionOnly();
+        throw new Error(data.error || 'Sesión expirada.');
+      }
+      return data;
+    }
+
+    async function handleSecureLogin(e) {
+      e.preventDefault();
+      preUnlockAudioEngine();
+      const cedula = document.getElementById('loginCedula').value.trim();
+      const pin = document.getElementById('loginPin').value.trim();
+      const errBox = document.getElementById('loginErrorBox');
+      const btn = document.getElementById('btnLoginSubmit');
+
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
+
+      try {
+        const res = await callServerApi({ action: 'LOGIN', cedula, pin });
+        if (!res.ok) {
+          errBox.textContent = res.error || 'No fue posible iniciar sesión.';
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        currentSession = { token: res.token, user: res.user };
+        localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSession));
+        enterApplication();
+
+        if (res.user.cambioPin) {
+          openOwnPinModal();
+        }
+      } catch (err) {
+        errBox.textContent = 'Error de conexión: ' + err.message;
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span>Ingresar al Sistema</span>';
+      }
+    }
+
+    function openOwnPinModal() {
+      document.getElementById('newPersonalPin').value = '';
+      document.getElementById('confirmPersonalPin').value = '';
+      document.getElementById('pinChangeMsg').classList.add('hidden');
+      document.getElementById('forcePinModal').classList.remove('hidden');
+    }
+
+    function closeOwnPinModal() {
+      document.getElementById('forcePinModal').classList.add('hidden');
+    }
+
+    async function submitNewOwnPin() {
+      const p1 = document.getElementById('newPersonalPin').value.trim();
+      const p2 = document.getElementById('confirmPersonalPin').value.trim();
+      const msg = document.getElementById('pinChangeMsg');
+
+      if (!/^\d{4,6}$/.test(p1)) {
+        msg.textContent = 'El PIN debe tener entre 4 y 6 números.';
+        msg.classList.remove('hidden');
+        return;
+      }
+      if (p1 !== p2) {
+        msg.textContent = 'Los dos PINes no coinciden.';
+        msg.classList.remove('hidden');
+        return;
+      }
+
+      const res = await callServerApi({ action: 'CHANGE_OWN_PIN', token: currentSession.token, newPin: p1 });
+      if (!res.ok) {
+        msg.textContent = res.error;
+        msg.classList.remove('hidden');
+        return;
+      }
+      currentSession.user.cambioPin = false;
+      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentSession));
+      closeOwnPinModal();
+      alert('PIN actualizado correctamente.');
+    }
+
+    function applyRoleLayout(rol) {
+      const cleanRole = String(rol || 'DIGITADOR').toUpperCase();
+      const nav = document.getElementById('mainNavGrid');
+      const btnAdmin = document.getElementById('btnTabAdmin');
+      const btnPin = document.getElementById('btnHeaderPin');
+
+      btnAdmin.classList.add('hidden');
+      btnPin.classList.remove('hidden');
+
+      if (isCentralUser(cleanRole)) {
+        nav.classList.add('hidden');
+        btnPin.classList.add('hidden');
+        stopLocalSirenSound();
+        switchTab('TAB_CENTRAL');
+      } else if (cleanRole === 'ADMINISTRADOR') {
+        nav.classList.remove('hidden');
+        nav.className = 'grid grid-cols-3 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+        btnAdmin.classList.remove('hidden');
+        switchTab('TAB_TURNO');
+      } else {
+        nav.classList.remove('hidden');
+        nav.className = 'grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-white/15';
+        switchTab('TAB_TURNO');
+      }
+    }
+
+    function enterApplication() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+      initSirenAudioElement();
+      requestScreenWakeLock();
+      requestNotificationPermissionIfNeeded();
+
+      const u = currentSession.user;
+      const rol = String(u.rol || 'DIGITADOR').toUpperCase();
+      document.getElementById('headerUserName').textContent = u.nombre;
+      document.getElementById('headerUserMeta').textContent = `${u.rango} • ${rol}`;
+
+      applyRoleLayout(rol);
+      syncWithServer(true);
+    }
+
+    function clearSessionOnly() {
+      currentSession = null;
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+      stopLocalSirenSound();
+      document.getElementById('appShell').classList.add('hidden');
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('loginPin').value = '';
+    }
+
+    function closeCentralUnlockModal() {
+      document.getElementById('centralUnlockModal').classList.add('hidden');
+      document.getElementById('centralAdminPinInput').value = '';
+      document.getElementById('centralUnlockError').classList.add('hidden');
+    }
+
+    async function confirmCentralAdminUnlock() {
+      const adminPin = document.getElementById('centralAdminPinInput').value.trim();
+      const errEl = document.getElementById('centralUnlockError');
+      errEl.classList.add('hidden');
+
+      const res = await callServerApi({ action: 'VERIFY_ADMIN_UNLOCK', adminPin });
+      if (!res.ok) {
+        errEl.textContent = res.error || 'Clave inválida.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      closeCentralUnlockModal();
+      clearSessionOnly();
+    }
+
+    async function logoutUser() {
+      if (currentSession && isCentralUser(currentSession.user?.rol)) {
+        document.getElementById('centralAdminPinInput').value = '';
+        document.getElementById('centralUnlockError').classList.add('hidden');
+        document.getElementById('centralUnlockModal').classList.remove('hidden');
+        return;
+      }
+
+      if (currentSession) {
+        const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
+        if (myActive) {
+          try {
+            await callServerApi({ action: 'END_SHIFT', token: currentSession.token, id: myActive.id }, true);
+          } catch (e) {}
+        }
+      }
+      clearSessionOnly();
+    }
+
+    function handleAppExitAutoClose() {
+      if (!currentSession || autoClosingOnExit) return;
+      if (isCentralUser(currentSession.user?.rol)) return;
+
+      const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
+      if (!myActive) return;
+
+      autoClosingOnExit = true;
+      try {
+        fetch(EXTERNAL_GAS_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'END_SHIFT', token: currentSession.token, id: myActive.id }),
+          keepalive: true
+        }).catch(() => {});
+      } catch (e) {}
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+    }
+
+    window.addEventListener('pagehide', handleAppExitAutoClose);
+    window.addEventListener('beforeunload', handleAppExitAutoClose);
+
+    async function syncWithServer(showSpinner = false) {
+      if (!currentSession || isSyncingNow) return;
+      isSyncingNow = true;
+      const icon = document.getElementById('btnRefreshIcon');
+      if (showSpinner && icon) icon.classList.add('fa-spin');
+
+      try {
+        const res = await callServerApi({ action: 'SYNC_DATA', token: currentSession.token });
+        if (!res.ok) return;
+        appState.geofence = res.geofence || { active: true, lat: FIXED_STATION_LAT, lng: FIXED_STATION_LNG, radius: 80, exemptCedulas: [] };
+        appState.emergency = res.emergency || { active: false };
+        appState.personal = res.personal || [];
+        appState.turnos = res.turnos || [];
+
+        const unitExempt = Array.isArray(appState.geofence.exemptCedulas) &&
+                         appState.geofence.exemptCedulas.includes(String(currentSession.user.cedula).trim());
+
+        document.getElementById('admGeoRadius').value = appState.geofence.radius;
+        document.getElementById('admGeoActive').checked = appState.geofence.active;
+        document.getElementById('geoBadge').textContent = unitExempt
+          ? 'Geocerca Desactivada por Admon'
+          : (appState.geofence.active ? `GPS Activo (${appState.geofence.radius}m)` : 'Geocerca Desactivada por Admon');
+
+        updateEmergencyUI();
+        renderTurnoView();
+        renderMyHoursView();
+        if (String(currentSession.user.rol).toUpperCase() === 'ADMINISTRADOR') {
+          if (!exemptInitialized) {
+            exemptUnitsDraft = [...(appState.geofence.exemptCedulas || [])];
+            exemptInitialized = true;
+          }
+          renderAdminOpenShifts();
+          renderExemptUnitsManager();
+          renderAdminConsolidated();
+          renderAdminUsersTable();
+        }
+      } catch (e) {} finally {
+        isSyncingNow = false;
+        if (icon) icon.classList.remove('fa-spin');
+      }
+    }
+
+    async function pollEmergencyFast() {
+      if (!currentSession || isSyncingNow) return;
+      try {
+        const res = await fetch(EXTERNAL_GAS_API_URL + '?t=' + Date.now());
+        const data = await res.json();
+        if (data && data.ok && data.emergency) {
+          appState.emergency = data.emergency;
+          updateEmergencyUI();
+        }
+      } catch (e) {}
+    }
+
+    function switchTab(tabId) {
+      const rol = String(currentSession?.user?.rol || 'DIGITADOR').toUpperCase();
+      if (isCentralUser(rol)) tabId = 'TAB_CENTRAL';
+      else if (tabId === 'TAB_CENTRAL') tabId = 'TAB_TURNO';
+      if (tabId === 'TAB_ADMIN' && rol !== 'ADMINISTRADOR') tabId = 'TAB_TURNO';
+
+      ['TAB_TURNO', 'TAB_MIS_HORAS', 'TAB_CENTRAL', 'TAB_ADMIN'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(tabId).classList.remove('hidden');
+
+      const map = {
+        TAB_TURNO: 'btnTabTurno',
+        TAB_MIS_HORAS: 'btnTabMisHoras',
+        TAB_ADMIN: 'btnTabAdmin'
+      };
+      Object.values(map).forEach(btnId => {
+        const b = document.getElementById(btnId);
+        if (!b) return;
+        b.classList.remove('bg-white', 'text-red-800');
+        b.classList.add('bg-red-950/50', 'text-white');
+      });
+      if (map[tabId]) {
+        const activeBtn = document.getElementById(map[tabId]);
+        activeBtn.classList.remove('bg-red-950/50', 'text-white');
+        activeBtn.classList.add('bg-white', 'text-red-800');
+      }
+    }
+
+    function formatSecondsHMS(totalSec) {
+      const s = Math.max(0, Math.floor(Number(totalSec) || 0));
+      const hrs = Math.floor(s / 3600);
+      const mins = Math.floor((s % 3600) / 60);
+      const secs = s % 60;
+      return [hrs, mins, secs].map(n => n < 10 ? '0' + n : String(n)).join('-');
+    }
+
+    function getFreshGPS() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Tu dispositivo no soporta geolocalización.'));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          }),
+          err => reject(new Error('Activa la Ubicación Precisa (GPS) en tu dispositivo.')),
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+        );
+      });
+    }
+
+    async function startNewShift() {
+      preUnlockAudioEngine();
+      const btn = document.getElementById('btnStartShift');
+      const unitExempt = Array.isArray(appState.geofence.exemptCedulas) &&
+                       appState.geofence.exemptCedulas.includes(String(currentSession.user.cedula).trim());
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Activando turno...';
+
+      try {
+        let gps = { lat: '', lng: '', accuracy: 0 };
+        if (appState.geofence.active && !unitExempt) {
+          gps = await getFreshGPS();
+        } else if (navigator.geolocation) {
+          try { gps = await getFreshGPS(); } catch (e) {}
+        }
+
+        const res = await callServerApi({
+          action: 'START_SHIFT',
+          token: currentSession.token,
+          nombre: currentSession.user.nombre,
+          rango: currentSession.user.rango,
+          condicion: document.getElementById('shiftCondition').value,
+          actividad: document.getElementById('shiftActivity').value,
+          lat: gps.lat,
+          lng: gps.lng,
+          accuracy: gps.accuracy
+        });
+
+        if (!res.ok) {
+          alert(res.error);
+          return;
+        }
+        await syncWithServer(true);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-clock"></i> <span>Activar turno</span>';
+      }
+    }
+
+    async function endCurrentShift() {
+      const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
+      if (!myActive) return;
+      if (!confirm('¿Deseas finalizar tu turno actual y registrar tus horas?')) return;
+
+      const res = await callServerApi({
+        action: 'END_SHIFT',
+        token: currentSession.token,
+        id: myActive.id
+      });
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      await syncWithServer(true);
+    }
+
+    function renderAdminOpenShifts() {
+      const listEl = document.getElementById('adminOpenShiftsList');
+      const countEl = document.getElementById('adminOpenShiftsCount');
+      if (!listEl || !countEl) return;
+
+      const openShifts = appState.turnos.filter(t => String(t.estado || '').toUpperCase() === 'ACTIVO');
+      countEl.textContent = `${openShifts.length} ${openShifts.length === 1 ? 'Activo' : 'Activos'}`;
+
+      if (openShifts.length === 0) {
+        listEl.innerHTML = '<div class="text-slate-500 italic">No hay turnos abiertos pendientes por cerrar.</div>';
+        return;
+      }
+
+      listEl.innerHTML = openShifts.map(t => {
+        const elapsedSec = Math.max(0, Math.floor((Date.now() - new Date(t.inicio).getTime()) / 1000));
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-2xl bg-amber-50/70 border border-amber-300">
+            <div class="min-w-0">
+              <div class="font-black text-slate-900 truncate">${t.nombre} <span class="text-slate-500 font-bold">(CC: ${t.cedula})</span></div>
+              <div class="text-[11px] text-slate-600">
+                ${t.rango || '-'} • ${t.condicion} • Inicio: ${new Date(t.inicio).toLocaleString('es-CO')} • Transcurrido: <strong class="font-mono">${formatSecondsHMS(elapsedSec)}</strong>
+              </div>
+            </div>
+            <button type="button" onclick="adminForceCloseShift('${t.id}', '${String(t.nombre || '').replace(/'/g, "\\'")}')"
+              class="bg-red-700 hover:bg-red-800 text-white font-black px-3.5 py-2 rounded-xl text-xs uppercase shrink-0 shadow">
+              <i class="fa-solid fa-square-check mr-1"></i> Cierre Definitivo
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function adminForceCloseShift(shiftId, unitName) {
+      if (String(currentSession?.user?.rol || '').toUpperCase() !== 'ADMINISTRADOR') {
+        alert('Solo el ADMINISTRADOR puede ejecutar cierres definitivos.');
+        return;
+      }
+      if (!confirm(`¿Dar cierre definitivo por olvido al turno activo de ${unitName}?`)) return;
+
+      const res = await callServerApi({
+        action: 'END_SHIFT',
+        token: currentSession.token,
+        id: shiftId,
+        forceCloseByAdmin: true,
+        reason: 'CIERRE DEFINITIVO POR OLVIDO (ADMINISTRADOR)'
+      });
+      if (!res.ok) {
+        alert(res.error || 'No se pudo cerrar el turno.');
+        return;
+      }
+      await syncWithServer(true);
+    }
+
+    function renderTurnoView() {
+      const activeShifts = appState.turnos.filter(t => t.estado === 'ACTIVO');
+      const myActive = activeShifts.find(t => t.cedula === currentSession.user.cedula);
+
+      if (myActive) {
+        document.getElementById('activeShiftCard').classList.remove('hidden');
+        document.getElementById('startShiftForm').classList.add('hidden');
+        document.getElementById('activeShiftDetails').textContent =
+          `${myActive.condicion} • ${myActive.actividad} (Inicio: ${new Date(myActive.inicio).toLocaleTimeString('es-CO')})`;
+      } else {
+        document.getElementById('activeShiftCard').classList.add('hidden');
+        document.getElementById('startShiftForm').classList.remove('hidden');
+      }
+
+      const listEl = document.getElementById('activePersonnelList');
+      if (activeShifts.length === 0) {
+        listEl.innerHTML = '<div class="text-slate-500 italic">No hay unidades con turno activo en este momento.</div>';
+        return;
+      }
+
+      listEl.innerHTML = activeShifts.map(t => `
+        <div class="flex items-center justify-between p-3 rounded-2xl border ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}">
+          <div>
+            <div class="font-black text-slate-900">${t.nombre}</div>
+            <div class="text-[11px] text-slate-600">${t.rango} • ${t.actividad}${t.observacionAdmin ? ' • ' + t.observacionAdmin : ''}</div>
+          </div>
+          <span class="text-[10px] font-black px-2.5 py-1 rounded-full ${t.condicion === 'COMANDANTE DE GUARDIA' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}">
+            ${t.condicion}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function renderMyHoursView() {
+      const mine = appState.turnos
+        .filter(t => t.cedula === currentSession.user.cedula && t.estado === 'FINALIZADO')
+        .sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+
+      const totalSecs = mine.reduce((acc, t) => acc + (Number(t.segundos) || 0), 0);
+      document.getElementById('myTotalHoursBadge').textContent = formatSecondsHMS(totalSecs);
+
+      const tbody = document.getElementById('myHoursTableBody');
+      if (mine.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-500">Aún no tienes turnos finalizados.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = mine.map(t => `
+        <tr>
+          <td class="p-2.5 font-semibold">${new Date(t.inicio).toLocaleDateString('es-CO')}</td>
+          <td class="p-2.5">
+            <div class="font-bold">${t.condicion}</div>
+            <div class="text-[11px] text-slate-500">${t.actividad}</div>
+          </td>
+          <td class="p-2.5 font-mono font-black text-slate-900">${t.formatoHms || formatSecondsHMS(t.segundos)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderExemptUnitsManager() {
+      const sel = document.getElementById('admExemptUnitSelect');
+      const mapUnits = new Map();
+      appState.personal.forEach(p => mapUnits.set(String(p.cedula).trim(), { cedula: String(p.cedula).trim(), nombre: p.nombre }));
+      exemptUnitsDraft.forEach(ced => {
+        const c = String(ced).trim();
+        if (!mapUnits.has(c)) mapUnits.set(c, { cedula: c, nombre: 'UNIDAD ' + c });
+      });
+
+      sel.innerHTML = Array.from(mapUnits.values()).map(u =>
+        `<option value="${u.cedula}">${u.nombre} (${u.cedula})</option>`
+      ).join('');
+
+      const chipsEl = document.getElementById('exemptUnitsChips');
+      if (exemptUnitsDraft.length === 0) {
+        chipsEl.innerHTML = '<span class="text-[11px] text-slate-500">Ninguna unidad exenta; todas sujetas a la geocerca.</span>';
+        return;
+      }
+
+      chipsEl.innerHTML = exemptUnitsDraft.map(ced => {
+        const cleanCed = String(ced).trim();
+        const person = appState.personal.find(p => String(p.cedula).trim() === cleanCed);
+        const label = person ? `${person.nombre} (${cleanCed})` : cleanCed;
+        return `
+          <span class="inline-flex items-center gap-1.5 bg-amber-100 border border-amber-300 text-amber-950 text-[11px] font-extrabold px-2.5 py-1 rounded-full max-w-full">
+            <span class="truncate">Sin GPS: ${label}</span>
+            <button type="button" onclick="removeExemptUnit('${cleanCed}')" title="Quitar permiso" class="bg-red-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-black shrink-0">×</button>
+          </span>
+        `;
+      }).join('');
+    }
+
+    function toggleUnitGeofenceExemption() {
+      const ced = String(document.getElementById('admExemptUnitSelect').value || '').trim();
+      if (!ced) return;
+      if (exemptUnitsDraft.includes(ced)) {
+        exemptUnitsDraft = exemptUnitsDraft.filter(x => String(x).trim() !== ced);
+      } else {
+        exemptUnitsDraft.push(ced);
+      }
+      renderExemptUnitsManager();
+    }
+
+    function removeExemptUnit(ced) {
+      const target = String(ced).trim();
+      exemptUnitsDraft = exemptUnitsDraft.filter(x => String(x).trim() !== target);
+      renderExemptUnitsManager();
+    }
+
+    function renderAdminUsersTable() {
+      const tbody = document.getElementById('adminUsersTableBody');
+      if (!tbody) return;
+      if (!appState.personal.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-slate-500">Sin unidades registradas.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = appState.personal.map(p => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-2.5">
+            <div class="font-black text-slate-900">${p.nombre}</div>
+            <div class="text-[11px] text-slate-500">CC: ${p.cedula}</div>
+          </td>
+          <td class="p-2.5 text-[11px] font-bold">${p.rango || '-'}</td>
+          <td class="p-2.5"><span class="bg-slate-200 text-slate-800 px-2 py-0.5 rounded-lg text-[10px] font-black">${p.rol}</span></td>
+          <td class="p-2.5 text-[11px] font-bold ${p.activo ? 'text-emerald-700' : 'text-red-700'}">${p.activo ? 'ACTIVO' : 'INACTIVO'}</td>
+          <td class="p-2.5 text-right">
+            <button type="button" onclick="loadUserIntoForm('${p.cedula}')" class="bg-amber-100 hover:bg-amber-200 text-amber-950 font-black px-2.5 py-1 rounded-lg text-[11px]">
+              Editar / PIN / Rol
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function loadUserIntoForm(cedula) {
+      const p = appState.personal.find(x => x.cedula === cedula);
+      if (!p) return;
+      document.getElementById('admUserCedula').value = p.cedula;
+      document.getElementById('admUserName').value = p.nombre;
+      document.getElementById('admUserRank').value = p.rango || '';
+      const roleVal = String(p.rol || 'DIGITADOR').toUpperCase();
+      document.getElementById('admUserRole').value = roleVal === 'CENTRAL' ? 'CENTRAL_EMERGENCIA' : roleVal;
+      document.getElementById('admUserActive').checked = Boolean(p.activo);
+      document.getElementById('admUserPin').value = '';
+      document.getElementById('admUserCedula').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function clearUserForm() {
+      document.getElementById('admUserCedula').value = '';
+      document.getElementById('admUserPin').value = '';
+      document.getElementById('admUserName').value = '';
+      document.getElementById('admUserRank').value = '';
+      document.getElementById('admUserRole').value = 'DIGITADOR';
+      document.getElementById('admUserActive').checked = true;
+      document.getElementById('admUserForcePin').checked = true;
+    }
+
+    function handleUnitSearchInput(query) {
+      const box = document.getElementById('unitSuggestionsBox');
+      const clearBtn = document.getElementById('btnClearUnitSearch');
+      const q = String(query || '').trim().toLowerCase();
+
+      if (q.length > 0 || selectedUnitCedula) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+
+      if (q === '') {
+        selectedUnitCedula = '';
+        renderAdminConsolidated();
+      }
+
+      const mapUnits = new Map();
+      appState.personal.forEach(p => mapUnits.set(p.cedula, { cedula: p.cedula, nombre: p.nombre, rango: p.rango }));
+      appState.turnos.forEach(t => {
+        if (!mapUnits.has(t.cedula)) mapUnits.set(t.cedula, { cedula: t.cedula, nombre: t.nombre, rango: t.rango });
+      });
+
+      const matches = Array.from(mapUnits.values()).filter(u =>
+        u.nombre.toLowerCase().includes(q) || u.cedula.includes(q)
+      );
+
+      if (matches.length === 0) {
+        box.innerHTML = '<div class="p-3 text-xs text-slate-500">No se encontraron unidades con ese criterio.</div>';
+      } else {
+        box.innerHTML = matches.map(u => `
+          <button type="button" onclick="selectUnitForConsolidated('${u.cedula}')"
+            class="w-full text-left px-3 py-2.5 hover:bg-red-50 flex items-center justify-between text-xs">
+            <div>
+              <div class="font-black text-slate-900">${u.nombre}</div>
+              <div class="text-[11px] text-slate-500">CC: ${u.cedula} • ${u.rango}</div>
+            </div>
+            <span class="text-[10px] font-black text-red-700 uppercase">Ver Horas →</span>
+          </button>
+        `).join('');
+      }
+      box.classList.remove('hidden');
+    }
+
+    function selectUnitForConsolidated(cedula) {
+      selectedUnitCedula = cedula;
+      const person = appState.personal.find(p => p.cedula === cedula) ||
+                     appState.turnos.find(t => t.cedula === cedula);
+      if (person) document.getElementById('unitSearchInput').value = `${person.nombre} (${person.cedula})`;
+      document.getElementById('unitSuggestionsBox').classList.add('hidden');
+      document.getElementById('btnClearUnitSearch').classList.remove('hidden');
+      renderAdminConsolidated();
+    }
+
+    function clearSelectedUnit() {
+      selectedUnitCedula = '';
+      document.getElementById('unitSearchInput').value = '';
+      document.getElementById('unitSuggestionsBox').classList.add('hidden');
+      document.getElementById('btnClearUnitSearch').classList.add('hidden');
+      renderAdminConsolidated();
+    }
+
+    function setQuickDateFilter(preset) {
+      const fromEl = document.getElementById('filterDateFrom');
+      const toEl = document.getElementById('filterDateTo');
+      const now = new Date();
+
+      if (preset === 'ALL') {
+        fromEl.value = '';
+        toEl.value = '';
+      } else if (preset === 'TODAY') {
+        const todayLocal = toLocalYMD(now);
+        fromEl.value = todayLocal;
+        toEl.value = todayLocal;
+      } else if (preset === 'WEEK') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(now.getFullYear(), now.getMonth(), diff);
+        fromEl.value = toLocalYMD(monday);
+        toEl.value = toLocalYMD(new Date());
+      } else if (preset === 'MONTH') {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        fromEl.value = toLocalYMD(firstDay);
+        toEl.value = toLocalYMD(new Date());
+      }
+      renderAdminConsolidated();
+    }
+
+    function getFilteredAdminShifts() {
+      const fromStr = document.getElementById('filterDateFrom').value;
+      const toStr = document.getElementById('filterDateTo').value;
+
+      return appState.turnos
+        .filter(t => t.estado === 'FINALIZADO')
+        .filter(t => {
+          if (selectedUnitCedula && t.cedula !== selectedUnitCedula) return false;
+          const localYMD = toLocalYMD(t.inicio);
+          if (fromStr && localYMD < fromStr) return false;
+          if (toStr && localYMD > toStr) return false;
+          return true;
+        })
+        .sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+    }
+
+    function renderAdminConsolidated() {
+      const filtered = getFilteredAdminShifts();
+      const summaryCard = document.getElementById('individualUnitSummaryCard');
+      const filterLabel = document.getElementById('activeFilterLabel');
+
+      if (selectedUnitCedula) {
+        const person = appState.personal.find(p => p.cedula === selectedUnitCedula) ||
+                       filtered[0] || { nombre: 'UNIDAD', rango: '', cedula: selectedUnitCedula };
+        const totalSecs = filtered.reduce((acc, t) => acc + (Number(t.segundos) || 0), 0);
+        const cmdSecs = filtered
+          .filter(t => t.condicion === 'COMANDANTE DE GUARDIA')
+          .reduce((acc, t) => acc + (Number(t.segundos) || 0), 0);
+
+        const fromStr = document.getElementById('filterDateFrom').value || 'Inicio';
+        const toStr = document.getElementById('filterDateTo').value || 'Hoy';
+
+        document.getElementById('summaryUnitName').textContent = person.nombre;
+        document.getElementById('summaryUnitMeta').textContent = `CC: ${selectedUnitCedula} • ${person.rango || ''} • Periodo: ${fromStr} a ${toStr}`;
+        document.getElementById('summaryUnitTotalHms').textContent = formatSecondsHMS(totalSecs);
+        document.getElementById('summaryUnitCount').textContent = String(filtered.length);
+        document.getElementById('summaryUnitCmdHms').textContent = formatSecondsHMS(cmdSecs);
+
+        summaryCard.classList.remove('hidden');
+        filterLabel.textContent = `Mostrando ${filtered.length} turno(s) de ${person.nombre}`;
+      } else {
+        summaryCard.classList.add('hidden');
+        filterLabel.textContent = `Mostrando ${filtered.length} registro(s) generales. Selecciona una unidad para ver su consolidado de horas.`;
+      }
+
+      const tbody = document.getElementById('adminConsolidatedTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay registros para los filtros seleccionados.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-2.5">
+            <div class="font-black text-slate-900">${t.nombre}</div>
+            <div class="text-[11px] text-slate-500">CC: ${t.cedula}</div>
+          </td>
+          <td class="p-2.5 text-[11px]">
+            <div class="font-bold">${new Date(t.inicio).toLocaleDateString('es-CO')}</div>
+            <div class="text-slate-500">${new Date(t.inicio).toLocaleTimeString('es-CO')} - ${t.fin ? new Date(t.fin).toLocaleTimeString('es-CO') : ''}</div>
+          </td>
+          <td class="p-2.5">
+            <div class="font-bold">${t.condicion}</div>
+            <div class="text-[11px] text-slate-500">${t.actividad}</div>
+            ${t.observacionAdmin ? `<div class="text-[10px] text-amber-800 font-semibold mt-0.5">${t.observacionAdmin}</div>` : ''}
+          </td>
+          <td class="p-2.5 font-mono font-black text-slate-900">${t.formatoHms || formatSecondsHMS(t.segundos)}</td>
+          <td class="p-2.5 text-right space-x-1">
+            <button onclick="openEditShiftModal('${t.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 px-2 py-1 rounded-lg font-bold text-[11px]">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="adminDeleteShift('${t.id}')" class="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded-lg font-bold text-[11px]">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function exportFilteredShiftsExcel() {
+      const filtered = getFilteredAdminShifts();
+      if (filtered.length === 0) {
+        alert('No hay registros filtrados para exportar.');
+        return;
+      }
+      const rows = filtered.map(t => ({
+        CEDULA: t.cedula,
+        NOMBRE: t.nombre,
+        RANGO: t.rango,
+        CONDICION: t.condicion,
+        ACTIVIDAD: t.actividad,
+        FECHA_INICIO: new Date(t.inicio).toLocaleString('es-CO'),
+        FECHA_FIN: t.fin ? new Date(t.fin).toLocaleString('es-CO') : '',
+        TIEMPO_HH_MM_SS: t.formatoHms || formatSecondsHMS(t.segundos),
+        AUDITORIA: t.observacionAdmin || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Consolidado_CBV');
+      const suffix = selectedUnitCedula ? `_${selectedUnitCedula}` : '_General';
+      XLSX.writeFile(wb, `Horas_CBV_Santa_Elena${suffix}.xlsx`);
+    }
+
+    document.addEventListener('click', function (e) {
+      const box = document.getElementById('unitSuggestionsBox');
+      const input = document.getElementById('unitSearchInput');
+      if (box && input && !box.contains(e.target) && e.target !== input) {
+        box.classList.add('hidden');
+      }
+    });
+
+    function openEditShiftModal(id) {
+      const t = appState.turnos.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('editShiftId').value = t.id;
+      document.getElementById('editShiftStart').value = new Date(t.inicio).toISOString().slice(0, 16);
+      document.getElementById('editShiftEnd').value = t.fin ? new Date(t.fin).toISOString().slice(0, 16) : '';
+      document.getElementById('editShiftObs').value = '';
+      document.getElementById('editShiftModal').classList.remove('hidden');
+    }
+
+    function closeEditShiftModal() {
+      document.getElementById('editShiftModal').classList.add('hidden');
+    }
+
+    async function saveEditedShift() {
+      const id = document.getElementById('editShiftId').value;
+      const inicio = new Date(document.getElementById('editShiftStart').value).toISOString();
+      const fin = new Date(document.getElementById('editShiftEnd').value).toISOString();
+      const observacion = document.getElementById('editShiftObs').value.trim();
+
+      if (!observacion) {
+        alert('Debes ingresar el motivo de auditoría.');
+        return;
+      }
+
+      const res = await callServerApi({
+        action: 'ADMIN_EDIT_SHIFT',
+        token: currentSession.token,
+        id, inicio, fin, observacion
+      });
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      closeEditShiftModal();
+      await syncWithServer(true);
+    }
+
+    async function adminDeleteShift(id) {
+      const check = prompt('Escribe ELIMINAR para borrar permanentemente este turno:');
+      if (check !== 'ELIMINAR') return;
+
+      const res = await callServerApi({
+        action: 'ADMIN_DELETE_SHIFT',
+        token: currentSession.token,
+        id
+      });
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      await syncWithServer(true);
+    }
+
+    async function adminSaveUser() {
+      const cedula = document.getElementById('admUserCedula').value.trim();
+      const pin = document.getElementById('admUserPin').value.trim();
+      const nombre = document.getElementById('admUserName').value.trim();
+      const rango = document.getElementById('admUserRank').value.trim();
+      const rol = document.getElementById('admUserRole').value;
+      const activo = document.getElementById('admUserActive').checked;
+      const forcePinChange = document.getElementById('admUserForcePin').checked;
+
+      if (!cedula || !nombre) {
+        alert('Cédula y nombre son obligatorios.');
+        return;
+      }
+
+      const res = await callServerApi({
+        action: 'ADMIN_SAVE_USER',
+        token: currentSession.token,
+        cedula,
+        pin,
+        resetPin: pin,
+        nombre,
+        rango,
+        rol,
+        activo,
+        forcePinChange
+      });
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      alert('Unidad, rol y PIN guardados en el servidor.');
+      clearUserForm();
+      await syncWithServer(true);
+    }
+
+    async function adminSaveGeofence() {
+      if (String(currentSession?.user?.rol || '').toUpperCase() !== 'ADMINISTRADOR') {
+        alert('Solo el ADMINISTRADOR puede activar o desactivar la geocerca.');
+        return;
+      }
+      const radius = Number(document.getElementById('admGeoRadius').value) || 80;
+      const active = document.getElementById('admGeoActive').checked;
+
+      const res = await callServerApi({
+        action: 'ADMIN_UPDATE_GEOFENCE',
+        token: currentSession.token,
+        radius,
+        active,
+        exemptCedulas: exemptUnitsDraft
+      });
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      exemptUnitsDraft = Array.isArray(res.exemptCedulas) ? res.exemptCedulas : [...exemptUnitsDraft];
+      alert('Configuración GPS guardada en el servidor.');
+      await syncWithServer(true);
+    }
+
+    function selectEmergencyType(type, emoji, btnEl) {
+      document.getElementById('emergType').value = type;
+      document.getElementById('emergEmoji').value = emoji;
+      document.querySelectorAll('.emerg-card-btn').forEach(b => {
+        b.classList.remove('border-red-700', 'bg-red-50', 'shadow-sm');
+        b.classList.add('border-slate-200', 'bg-white');
+      });
+      if (btnEl) {
+        btnEl.classList.remove('border-slate-200', 'bg-white');
+        btnEl.classList.add('border-red-700', 'bg-red-50', 'shadow-sm');
+      }
+    }
+
+    async function triggerEmergencyState(active) {
+      if (!isCentralUser(currentSession?.user?.rol)) {
+        alert('Solo el perfil CENTRAL DE EMERGENCIA puede operar la alarma.');
+        return;
+      }
+      const type = document.getElementById('emergType').value;
+      const emoji = document.getElementById('emergEmoji').value || '🚨';
+      const location = document.getElementById('emergLocation').value.trim() || 'Jurisdicción Santa Elena';
+
+      const res = await callServerApi({
+        action: 'TRIGGER_EMERGENCY',
+        token: currentSession.token,
+        active,
+        type,
+        emoji,
+        location,
+        by: currentSession.user.nombre
+      });
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      appState.emergency = res.emergency || { active: false };
+      updateEmergencyUI();
+    }
+
+    function updateEmergencyUI() {
+      const banner = document.getElementById('emergencyBanner');
+      const btnDeactLarge = document.getElementById('btnDeactivateSirenLarge');
+      const onCentralScreen = isCentralUser(currentSession?.user?.rol);
+
+      if (appState.emergency && appState.emergency.active) {
+        const startedMs = new Date(appState.emergency.timestamp || Date.now()).getTime();
+        const elapsedSec = Math.floor((Date.now() - startedMs) / 1000);
+        const remainingSec = Math.max(0, EMERGENCY_AUTO_OFF_SEC - elapsedSec);
+
+        if (remainingSec <= 0) {
+          appState.emergency.active = false;
+          stopLocalSirenSound();
+          if (onCentralScreen && autoOffHandledForTs !== appState.emergency.timestamp) {
+            autoOffHandledForTs = appState.emergency.timestamp;
+            triggerEmergencyState(false);
+          }
+          banner.classList.add('hidden');
+          if (btnDeactLarge) btnDeactLarge.classList.add('hidden');
+          return;
+        }
+
+        if (onCentralScreen) {
+          banner.classList.add('hidden');
+          stopLocalSirenSound();
+          if (btnDeactLarge) {
+            btnDeactLarge.classList.remove('hidden');
+            document.getElementById('btnDeactivateSirenLabel').textContent =
+              `Desactivar Alarma (Auto-apagado en ${remainingSec}s)`;
+          }
+        } else {
+          if (btnDeactLarge) btnDeactLarge.classList.add('hidden');
+          banner.classList.remove('hidden');
+          document.getElementById('emergencyBannerEmoji').textContent = appState.emergency.emoji || '🚨';
+          document.getElementById('emergencyBannerText').textContent =
+            `${appState.emergency.type} • ${appState.emergency.location} (Despacha: ${appState.emergency.by})`;
+          fireSystemEmergencyAlert(appState.emergency);
+          if (mutedEmergencyTs !== appState.emergency.timestamp) {
+            startLocalSirenSound();
+          }
+        }
+      } else {
+        banner.classList.add('hidden');
+        if (btnDeactLarge) btnDeactLarge.classList.add('hidden');
+        stopLocalSirenSound();
+      }
+    }
+
+    function unlockAndPlaySiren() {
+      if (isCentralUser(currentSession?.user?.rol)) return;
+      mutedEmergencyTs = '';
+      stopLocalSirenSound();
+      startLocalSirenSound();
+    }
+
+    function manualMuteSiren() {
+      if (appState.emergency && appState.emergency.timestamp) {
+        mutedEmergencyTs = appState.emergency.timestamp;
+      }
+      stopLocalSirenSound();
+    }
+
+    function startLocalSirenSound() {
+      if (isCentralUser(currentSession?.user?.rol)) return;
+
+      // 1. MOTOR PRINCIPAL: HTML5 AUDIO WAV (SUENA EN iOS INCLUSO CON SWITCH DE SILENCIO)
+      try {
+        const el = initSirenAudioElement();
+        if (el && el.paused) {
+          el.muted = false;
+          el.volume = 1.0;
+          const playPromise = el.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => startWebAudioFallback());
+          }
+        }
+      } catch (e) {
+        startWebAudioFallback();
+      }
+    }
+
+    function startWebAudioFallback() {
+      if (sirenInterval || isCentralUser(currentSession?.user?.rol)) return;
+      try {
+        if (!sirenAudioCtx) {
+          sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sirenAudioCtx.state === 'suspended') {
+          sirenAudioCtx.resume().catch(() => {});
+        }
+        let high = false;
+        sirenInterval = setInterval(() => {
+          if (!sirenAudioCtx) return;
+          if (sirenAudioCtx.state === 'suspended') {
+            sirenAudioCtx.resume().catch(() => {});
+          }
+          const osc = sirenAudioCtx.createOscillator();
+          const gain = sirenAudioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.value = high ? 1040 : 640;
+          gain.gain.value = 0.35;
+          osc.connect(gain);
+          gain.connect(sirenAudioCtx.destination);
+          osc.start();
+          osc.stop(sirenAudioCtx.currentTime + 0.38);
+          high = !high;
+        }, 420);
+      } catch (e) {}
+    }
+
+    function stopLocalSirenSound() {
+      try {
+        const el = document.getElementById('sirenAudioEl');
+        if (el && !el.paused) {
+          el.pause();
+          el.currentTime = 0;
+        }
+      } catch (e) {}
+      if (sirenInterval) {
+        clearInterval(sirenInterval);
+        sirenInterval = null;
+      }
+    }
+
+    function shareEmergencyWhatsApp() {
+      const type = document.getElementById('emergType').value;
+      const emoji = document.getElementById('emergEmoji').value || '🚨';
+      const location = document.getElementById('emergLocation').value.trim() || 'Por confirmar';
+      const msg = `🚨 *ALARMA BOMBEROS VOLUNTARIOS SANTA ELENA*\n` +
+                  `${emoji} *Tipo:* ${type}\n` +
+                  `📍 *Ubicación / Novedad:* ${location}\n` +
+                  `🕒 *Hora:* ${new Date().toLocaleTimeString('es-CO')}\n` +
+                  `📡 *Despacha:* ${currentSession.user.nombre}\n` +
+                  `_Unidades disponibles reportarse de inmediato._`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    setInterval(() => {
+      if (!currentSession) return;
+      const myActive = appState.turnos.find(t => t.cedula === currentSession.user.cedula && t.estado === 'ACTIVO');
+      if (myActive) {
+        const secs = Math.floor((Date.now() - new Date(myActive.inicio).getTime()) / 1000);
+        document.getElementById('liveShiftTimer').textContent = formatSecondsHMS(secs);
+      }
+      if (appState.emergency && appState.emergency.active) {
+        updateEmergencyUI();
+      }
+    }, 1000);
+
+    setInterval(() => {
+      if (currentSession) pollEmergencyFast();
+    }, 4000);
+
+    setInterval(() => {
+      if (currentSession && !document.hidden) syncWithServer(false);
+    }, 30000);
+
+    window.onload = function () {
+      initSirenAudioElement();
+      const saved = localStorage.getItem(STORAGE_KEY_SESSION);
+      if (saved) {
+        try {
+          currentSession = JSON.parse(saved);
+          if (currentSession && currentSession.token && currentSession.user) {
+            enterApplication();
+          }
+        } catch (e) {}
+      }
+    };
+  </script>
+</body>
+</html>
